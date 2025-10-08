@@ -1,5 +1,5 @@
 #include "device_query.hpp"
-#include "../utils/cuda_check.hpp"   // uses CUDA_CHECK(...)
+#include "../utils/cuda_check.hpp"   // uses dphpc::cudacheck::CUDA_CHECK(...)
 #include <cuda_runtime_api.h>
 #include <sstream>
 #include <mutex>
@@ -95,18 +95,18 @@ static void query_core(cudaDeviceProp& props, DeviceInfo& d) {
 }
 
 static void query_versions(DeviceInfo& d) {
-    CUDA_CHECK(cudaDriverGetVersion(&d.driver_version));
-    CUDA_CHECK(cudaRuntimeGetVersion(&d.runtime_version));
+    dphpc::cudacheck::CUDA_CHECK(cudaDriverGetVersion(&d.driver_version));
+    dphpc::cudacheck::CUDA_CHECK(cudaRuntimeGetVersion(&d.runtime_version));
 }
 
 static DeviceInfo do_query(int device_id) {
     DeviceInfo d{};
     int dev = device_id;
-    if (dev < 0) CUDA_CHECK(cudaGetDevice(&dev));
+    if (dev < 0) dphpc::cudacheck::CUDA_CHECK(cudaGetDevice(&dev));
     d.device_id = dev;
 
     cudaDeviceProp props{};
-    CUDA_CHECK(cudaGetDeviceProperties(&props, dev));
+    dphpc::cudacheck::CUDA_CHECK(cudaGetDeviceProperties(&props, dev));
 
     query_versions(d);
     query_core(props, d);
@@ -120,7 +120,7 @@ const DeviceInfo& query(int device_id) {
     static std::array<DeviceInfo, 64> cache{}; // up to 64 GPUs in a node
     static std::array<bool, 64>       filled{};
     int dev = device_id;
-    if (dev < 0) CUDA_CHECK(cudaGetDevice(&dev));
+    if (dev < 0) dphpc::cudacheck::CUDA_CHECK(cudaGetDevice(&dev));
 
     std::scoped_lock lk(mtx);
     if (!filled[dev]) {

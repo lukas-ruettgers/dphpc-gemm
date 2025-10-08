@@ -3,7 +3,7 @@
 #include <string>
 #include <cstdint>
 
-namespace gemm::device_query {
+namespace dphpc::device_query {
 
 enum class Arch : int { SM70 = 70, SM75 = 75, SM80 = 80, SM86 = 86, SM89 = 89, SM90 = 90, Unknown = 0 };
 
@@ -64,4 +64,4 @@ const DeviceInfo& query(int device_id = -1);
 // Optional pretty-printer (useful in eval/)
 std::string to_string(const DeviceInfo& d);
 
-} // namespace gemm::device_query
+} // namespace dphpc::device_query

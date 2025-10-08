@@ -8,13 +8,12 @@
 #include <algorithm>
 #include "cuda_check.hpp"
 
-namespace timing {
-
+namespace dphpc::timing {
 // Simple RAII CUDA event wrapper
 struct Event {
     cudaEvent_t ev{};
     explicit Event(unsigned flags = cudaEventDefault) {
-        CUDA_CHECK(cudaEventCreateWithFlags(&ev, flags));
+        dphpc::cudacheck::CUDA_CHECK(cudaEventCreateWithFlags(&ev, flags));
     }
     ~Event() { cudaEventDestroy(ev); }
     Event(const Event&) = delete;
@@ -31,12 +30,12 @@ struct CudaTimer {
     explicit CudaTimer(cudaStream_t s = 0)
         : stream(s), start(cudaEventDefault), stop(cudaEventDefault) {}
 
-    void record_start() { CUDA_CHECK(cudaEventRecord(start.ev, stream)); }
-    void record_stop()  { CUDA_CHECK(cudaEventRecord(stop.ev,  stream)); }
+    void record_start() { dphpc::cudacheck::CUDA_CHECK(cudaEventRecord(start.ev, stream)); }
+    void record_stop()  { dphpc::cudacheck::CUDA_CHECK(cudaEventRecord(stop.ev,  stream)); }
     float elapsed_ms()  {
-        CUDA_CHECK(cudaEventSynchronize(stop.ev));
+        dphpc::cudacheck::CUDA_CHECK(cudaEventSynchronize(stop.ev));
         float ms = 0.0f;
-        CUDA_CHECK(cudaEventElapsedTime(&ms, start.ev, stop.ev));
+        dphpc::cudacheck::CUDA_CHECK(cudaEventElapsedTime(&ms, start.ev, stop.ev));
         return ms;
     }
 };
@@ -49,8 +48,8 @@ std::pair<double,double> benchmark(cudaStream_t stream, F&& fn,
     for (int i = 0; i < warmup; ++i) {
         fn();
     }
-    CUDA_CHECK(cudaStreamSynchronize(stream));
-    CUDA_CHECK_LAST();
+    dphpc::cudacheck::CUDA_CHECK(cudaStreamSynchronize(stream));
+    dphpc::cudacheck::CUDA_CHECK_LAST();
 
     std::vector<double> ms;
     ms.reserve(iters);
@@ -63,8 +62,8 @@ std::pair<double,double> benchmark(cudaStream_t stream, F&& fn,
         ms.push_back(t.elapsed_ms());
     }
     // Optional: ensure all work done
-    CUDA_CHECK(cudaStreamSynchronize(stream));
-    CUDA_CHECK_LAST();
+    dphpc::cudacheck::CUDA_CHECK(cudaStreamSynchronize(stream));
+    dphpc::cudacheck::CUDA_CHECK_LAST();
 
     // Robust summary (drop top/bottom 5% if enough samples)
     if (iters >= 20) {
@@ -83,4 +82,4 @@ std::pair<double,double> benchmark(cudaStream_t stream, F&& fn,
     return {mean, std::sqrt(var)};
 }
 
-} // namespace timing
+}
