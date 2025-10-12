@@ -1,0 +1,2 @@
+# COMPILE
+nvcc -I external/cutlass/include -I external/cutlass/tools/util/include src/backend/cute/sgemm.cu
