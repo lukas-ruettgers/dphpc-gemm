@@ -1,7 +1,7 @@
 #pragma once
 #include "../../core/dispatcher.hpp"
 
-namespace dphpc::backend::cute {
+namespace dphpc::backend::cutlass {
 cudaError_t gemm_entry(const Problem& problem,
                        const Plan& plan,
                        const void* A, int ldA,
