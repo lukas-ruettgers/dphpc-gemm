@@ -1,8 +1,0 @@
-# COMPILE
-nvcc -I external/cutlass/include -I external/cutlass/tools/util/include src/backend/cute/sgemm.cu
-
-# BUILD
-mkdir -p build && cd build
-cmake ..
-cmake --build . -j
-./gemm  # your args
