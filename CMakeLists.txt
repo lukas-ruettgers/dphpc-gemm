@@ -32,6 +32,9 @@ target_include_directories(gemm_core
   PUBLIC  ${CMAKE_SOURCE_DIR}/src
   PRIVATE ${CUTLASS_INCLUDE_DIRS} ${CUTE_INCLUDE_DIR}
 )
+target_link_libraries(gemm_core
+  PUBLIC CUDA::cudart         
+)
 
 # --- Backend: CuTe ------------------------------------------------------------
 add_library(gemm_backend_cute
