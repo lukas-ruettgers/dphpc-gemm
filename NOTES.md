@@ -189,7 +189,9 @@ Add `-maxrregcount=64` to `nvcc`
 Make sure that you have followed the environment setup [at the top](#compile-for-5060-ti-cc-120).
 
 ```
-cmake -S . -DCMAKE_CUDA_COMPILER=$CUDA_HOME/bin/nvcc -B build
+cmake -S . -B build \
+  -DCMAKE_CUDA_COMPILER=$CUDA_HOME/bin/nvcc \
+  -DCMAKE_CUDA_ARCHITECTURES=80
 cmake --build build -j
 ./gemm  # your args
 ```
