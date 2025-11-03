@@ -9,7 +9,7 @@
 #include "planner.hpp"      // make_plan(...)
 #include "dispatcher.hpp"   // dispatch_and_run(...)
 
-namespace {
+namespace dphpc {
 
 // helpers reused from your earlier parsing
 std::string lc(std::string s) {
@@ -114,4 +114,5 @@ int main(int argc, char** argv)
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
+}
 }
