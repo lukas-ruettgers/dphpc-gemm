@@ -198,7 +198,7 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
   //   copy(.) operates on the global and shared memory via the tA|tB partitioning
   //   gemm(.) operates on the shared and register memory via the tC partitioning
 
-  auto K_TILE_MAX = size<2>(tAgA);
+  auto K_TILE_MAX = ::cute::size<2>(tAgA);
 
   for (int k_tile = 0; k_tile < K_TILE_MAX; ++k_tile)
   {
