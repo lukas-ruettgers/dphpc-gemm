@@ -13,11 +13,6 @@
 
 namespace dphpc::eval {
 
-// column-major index helper
-inline std::size_t idx_cm(int i, int j, int ld) {
-    return static_cast<std::size_t>(i) + static_cast<std::size_t>(j) * static_cast<std::size_t>(ld);
-}
-
 // Returns mean milliseconds (also prints mean/stddev GFLOP/s)
 inline double bench_gemm(const Problem& problem,
                          const Plan& plan,
@@ -63,9 +58,9 @@ inline double bench_gemm(const Problem& problem,
 
     // Device buffers (persistent across iters)
     float *dA=nullptr, *dB=nullptr, *dC=nullptr;
-    CUDA_CHECK(cudaMalloc(&dA, bytesA));
-    CUDA_CHECK(cudaMalloc(&dB, bytesB));
-    CUDA_CHECK(cudaMalloc(&dC, bytesC));
+    dphpc::cudacheck::CUDA_CHECK(cudaMalloc(&dA, bytesA));
+    dphpc::cudacheck::CUDA_CHECK(cudaMalloc(&dB, bytesB));
+    dphpc::cudacheck::CUDA_CHECK(cudaMalloc(&dC, bytesC));
 
     const std::uint64_t base_seed = GLOBAL_SEED;
 
@@ -80,22 +75,22 @@ inline double bench_gemm(const Problem& problem,
         dphpc::data::fillRandomMatrix<float>(hB.data(), HB, WB, DistributionType::Gaussian, sB, 0.0f, 1.0f);
         dphpc::data::fillRandomMatrix<float>(hC.data(), M,  N,  DistributionType::Gaussian, sC, 0.0f, 1.0f);
 
-        CUDA_CHECK(cudaMemcpyAsync(dA, hA.data(), bytesA, cudaMemcpyHostToDevice, stream));
-        CUDA_CHECK(cudaMemcpyAsync(dB, hB.data(), bytesB, cudaMemcpyHostToDevice, stream));
-        CUDA_CHECK(cudaMemcpyAsync(dC, hC.data(), bytesC, cudaMemcpyHostToDevice, stream));
-        CUDA_CHECK(cudaStreamSynchronize(stream));
+        dphpc::cudacheck::CUDA_CHECK(cudaMemcpyAsync(dA, hA.data(), bytesA, cudaMemcpyHostToDevice, stream));
+        dphpc::cudacheck::CUDA_CHECK(cudaMemcpyAsync(dB, hB.data(), bytesB, cudaMemcpyHostToDevice, stream));
+        dphpc::cudacheck::CUDA_CHECK(cudaMemcpyAsync(dC, hC.data(), bytesC, cudaMemcpyHostToDevice, stream));
+        dphpc::cudacheck::CUDA_CHECK(cudaStreamSynchronize(stream));
     };
 
     // Warmups (reinitialize each time, but do NOT time)
     for (int i = 0; i < warmup_iters; ++i) {
         reinit_and_copy(i);
-        CUDA_CHECK(entry(problem, plan,
+        dphpc::cudacheck::CUDA_CHECK(entry(problem, plan,
                                dA, ldA,
                                dB, ldB,
                                dC, ldC,
                                alpha_d, beta_d,
                                stream));
-        CUDA_CHECK(cudaStreamSynchronize(stream));
+        dphpc::cudacheck::CUDA_CHECK(cudaStreamSynchronize(stream));
     }
 
     // Timed iterations: reinit each time, but time ONLY the GEMM call via events
@@ -107,7 +102,7 @@ inline double bench_gemm(const Problem& problem,
 
         dphpc::timing::CudaTimer t(stream);
         t.record_start();
-        CUDA_CHECK(entry(problem, plan,
+        dphpc::cudacheck::CUDA_CHECK(entry(problem, plan,
                                dA, ldA,
                                dB, ldB,
                                dC, ldC,
@@ -119,8 +114,8 @@ inline double bench_gemm(const Problem& problem,
         times_ms.push_back(ms);
     }
 
-    CUDA_CHECK(cudaStreamSynchronize(stream));
-    CUDA_CHECK_LAST();
+    dphpc::cudacheck::CUDA_CHECK(cudaStreamSynchronize(stream));
+    dphpc::cudacheck::CUDA_CHECK_LAST();
 
     // Summarize & report
     auto [mean_ms, std_ms] = dphpc::timing::summarize(times_ms, 0.05);

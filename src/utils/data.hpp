@@ -96,4 +96,9 @@ std::vector<T> generateRandomMatrix(int H, int W,
     return y;
 }
 
+// Column-major index helper: elem(i,j) at i + j*ld
+inline std::size_t idx_cm(int i, int j, int ld) {
+    return static_cast<std::size_t>(i) + static_cast<std::size_t>(j) * static_cast<std::size_t>(ld);
+}
+
 } // namespace dphpc::data

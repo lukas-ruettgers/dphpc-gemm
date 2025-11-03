@@ -13,11 +13,6 @@
 
 namespace dphpc::eval {
 
-// Column-major index helper: elem(i,j) at i + j*ld
-inline std::size_t idx_cm(int i, int j, int ld) {
-    return static_cast<std::size_t>(i) + static_cast<std::size_t>(j) * static_cast<std::size_t>(ld);
-}
-
 // CPU reference: C_ref = alpha * op(A) * op(B) + beta * C0
 inline void gemm_cpu_ref_f32(float*       C_ref, int ldC,
                              const float* A,     int ldA, bool transA,
@@ -28,8 +23,8 @@ inline void gemm_cpu_ref_f32(float*       C_ref, int ldC,
     // Start from beta*C0
     for (int j = 0; j < N; ++j) {
         for (int i = 0; i < M; ++i) {
-            float c = (beta == 0.0f) ? 0.0f : beta * C0[idx_cm(i, j, ldC)];
-            C_ref[idx_cm(i, j, ldC)] = c;
+            float c = (beta == 0.0f) ? 0.0f : beta * C0[dphpc::data::idx_cm(i, j, ldC)];
+            C_ref[dphpc::data::idx_cm(i, j, ldC)] = c;
         }
     }
 
@@ -39,9 +34,9 @@ inline void gemm_cpu_ref_f32(float*       C_ref, int ldC,
             // B_op(k,j)
             float bkj;
             if (!transB) { // B is KxN, column-major
-                bkj = B[idx_cm(k, j, ldB)];
+                bkj = B[dphpc::data::idx_cm(k, j, ldB)];
             } else {       // B^T is KxN → B is NxK in storage
-                bkj = B[idx_cm(j, k, ldB)];
+                bkj = B[dphpc::data::idx_cm(j, k, ldB)];
             }
             float abcol_scale = alpha * bkj;
 
@@ -49,11 +44,11 @@ inline void gemm_cpu_ref_f32(float*       C_ref, int ldC,
                 // A_op(i,k)
                 float aik;
                 if (!transA) { // A is MxK
-                    aik = A[idx_cm(i, k, ldA)];
+                    aik = A[dphpc::data::idx_cm(i, k, ldA)];
                 } else {       // A^T is MxK → A is KxM in storage
-                    aik = A[idx_cm(k, i, ldA)];
+                    aik = A[dphpc::data::idx_cm(k, i, ldA)];
                 }
-                C_ref[idx_cm(i, j, ldC)] += aik * abcol_scale;
+                C_ref[dphpc::data::idx_cm(i, j, ldC)] += aik * abcol_scale;
             }
         }
     }
@@ -131,25 +126,25 @@ inline bool verify_gemm(const Problem& problem,
     const std::size_t bytesB = static_cast<std::size_t>(HB) * static_cast<std::size_t>(WB) * sizeof(float);
     const std::size_t bytesC = static_cast<std::size_t>(M)  * static_cast<std::size_t>(N)  * sizeof(float);
 
-    CUDA_CHECK(cudaMalloc(&dA, bytesA));
-    CUDA_CHECK(cudaMalloc(&dB, bytesB));
-    CUDA_CHECK(cudaMalloc(&dC, bytesC));
+    dphpc::cudacheck::CUDA_CHECK(cudaMalloc(&dA, bytesA));
+    dphpc::cudacheck::CUDA_CHECK(cudaMalloc(&dB, bytesB));
+    dphpc::cudacheck::CUDA_CHECK(cudaMalloc(&dC, bytesC));
 
-    CUDA_CHECK(cudaMemcpyAsync(dA, hA.data(),  bytesA, cudaMemcpyHostToDevice, stream));
-    CUDA_CHECK(cudaMemcpyAsync(dB, hB.data(),  bytesB, cudaMemcpyHostToDevice, stream));
-    CUDA_CHECK(cudaMemcpyAsync(dC, hC.data(),  bytesC, cudaMemcpyHostToDevice, stream));
-    CUDA_CHECK(cudaStreamSynchronize(stream));
+    dphpc::cudacheck::CUDA_CHECK(cudaMemcpyAsync(dA, hA.data(),  bytesA, cudaMemcpyHostToDevice, stream));
+    dphpc::cudacheck::CUDA_CHECK(cudaMemcpyAsync(dB, hB.data(),  bytesB, cudaMemcpyHostToDevice, stream));
+    dphpc::cudacheck::CUDA_CHECK(cudaMemcpyAsync(dC, hC.data(),  bytesC, cudaMemcpyHostToDevice, stream));
+    dphpc::cudacheck::CUDA_CHECK(cudaStreamSynchronize(stream));
 
     // Invoke backend entry (overwrites dC in place)
-    CUDA_CHECK(entry(problem, plan,
+    dphpc::cudacheck::CUDA_CHECK(entry(problem, plan,
                            dA, ldA,
                            dB, ldB,
                            dC, ldC,
                            alpha_d, beta_d,
                            stream));
-    CUDA_CHECK(cudaStreamSynchronize(stream));
-    CUDA_CHECK(cudaMemcpyAsync(hC.data(), dC, bytesC, cudaMemcpyDeviceToHost, stream));
-    CUDA_CHECK(cudaStreamSynchronize(stream));
+    dphpc::cudacheck::CUDA_CHECK(cudaStreamSynchronize(stream));
+    dphpc::cudacheck::CUDA_CHECK(cudaMemcpyAsync(hC.data(), dC, bytesC, cudaMemcpyDeviceToHost, stream));
+    dphpc::cudacheck::CUDA_CHECK(cudaStreamSynchronize(stream));
 
     // Compare
     int mismatches = 0;
@@ -157,8 +152,8 @@ inline bool verify_gemm(const Problem& problem,
 
     for (int j = 0; j < N; ++j) {
         for (int i = 0; i < M; ++i) {
-            const float got = hC[idx_cm(i, j, ldC)];
-            const float ref = hC_ref[idx_cm(i, j, ldC)];
+            const float got = hC[dphpc::data::idx_cm(i, j, ldC)];
+            const float ref = hC_ref[dphpc::data::idx_cm(i, j, ldC)];
             if (!within_tol(got, ref, rtol, atol)) {
                 if (mismatches < kMaxReport) {
                     const double diff = std::fabs(static_cast<double>(got) - static_cast<double>(ref));
