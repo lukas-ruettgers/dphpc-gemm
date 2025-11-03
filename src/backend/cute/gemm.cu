@@ -57,8 +57,8 @@ template <class ProblemShape, class CtaTiler,
           class TB, class BStride, class BSmemLayout, class BThreadLayout,
           class TC, class CStride, class CSmemLayout, class CThreadLayout,
           class Alpha, class Beta>
-__global__  // NOTE: The following replacement was suggested: __global__ static -> __global__
-__launch_bounds__(decltype(size(CThreadLayout{}))::value)
+__global__
+__launch_bounds__(decltype(::cute::size(CThreadLayout{}))::value)
 void
 gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
             TA const* __restrict__ A, AStride dA, ASmemLayout sA_layout, AThreadLayout tA,
@@ -67,100 +67,95 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
             Alpha alpha, Beta beta)
 {
   // NOTE: Added __restrict__ to A/B/C pointers to help the compiler
-  using namespace cute;
 
   // Preconditions
-  CUTE_STATIC_ASSERT_V(rank(shape_MNK) == Int<3>{});                   // (M, N, K)
-  CUTE_STATIC_ASSERT_V(rank(cta_tiler) == Int<3>{});                   // (BLK_M, BLK_N, BLK_K)
+  CUTE_STATIC_ASSERT_V(::cute::rank(shape_MNK) == ::cute::Int<3>{});         // (M, N, K)
+  CUTE_STATIC_ASSERT_V(::cute::rank(cta_tiler) == ::cute::Int<3>{});         // (BLK_M, BLK_N, BLK_K)
 
-  static_assert(is_static<AThreadLayout>::value);
-  static_assert(is_static<BThreadLayout>::value);
-  static_assert(is_static<CThreadLayout>::value);
+  static_assert(::cute::is_static<AThreadLayout>::value);
+  static_assert(::cute::is_static<BThreadLayout>::value);
+  static_assert(::cute::is_static<CThreadLayout>::value);
 
-  CUTE_STATIC_ASSERT_V(size(tA) == size(tB));                          // NumThreads
-  CUTE_STATIC_ASSERT_V(size(tC) == size(tA));                          // NumThreads
+  CUTE_STATIC_ASSERT_V(::cute::size(tA) == ::cute::size(tB));                // NumThreads
+  CUTE_STATIC_ASSERT_V(::cute::size(tC) == ::cute::size(tA));                // NumThreads
 
-  CUTE_STATIC_ASSERT_V(size<0>(cta_tiler) % size<0>(tA) == Int<0>{});  // BLK_M / THR_M
-  CUTE_STATIC_ASSERT_V(size<2>(cta_tiler) % size<1>(tA) == Int<0>{});  // BLK_K / THR_K
-  CUTE_STATIC_ASSERT_V(size<1>(cta_tiler) % size<0>(tB) == Int<0>{});  // BLK_N / THR_N
-  CUTE_STATIC_ASSERT_V(size<2>(cta_tiler) % size<1>(tB) == Int<0>{});  // BLK_K / THR_K
-  CUTE_STATIC_ASSERT_V(size<0>(cta_tiler) % size<0>(tC) == Int<0>{});  // BLK_M / THR_M
-  CUTE_STATIC_ASSERT_V(size<1>(cta_tiler) % size<1>(tC) == Int<0>{});  // BLK_N / THR_N
+  CUTE_STATIC_ASSERT_V(::cute::size<0>(cta_tiler) % ::cute::size<0>(tA) == ::cute::Int<0>{});  // BLK_M / THR_M
+  CUTE_STATIC_ASSERT_V(::cute::size<2>(cta_tiler) % ::cute::size<1>(tA) == ::cute::Int<0>{});  // BLK_K / THR_K
+  CUTE_STATIC_ASSERT_V(::cute::size<1>(cta_tiler) % ::cute::size<0>(tB) == ::cute::Int<0>{});  // BLK_N / THR_N
+  CUTE_STATIC_ASSERT_V(::cute::size<2>(cta_tiler) % ::cute::size<1>(tB) == ::cute::Int<0>{});  // BLK_K / THR_K
+  CUTE_STATIC_ASSERT_V(::cute::size<0>(cta_tiler) % ::cute::size<0>(tC) == ::cute::Int<0>{});  // BLK_M / THR_M
+  CUTE_STATIC_ASSERT_V(::cute::size<1>(cta_tiler) % ::cute::size<1>(tC) == ::cute::Int<0>{});  // BLK_N / THR_N
 
-  static_assert(is_static<ASmemLayout>::value);
-  static_assert(is_static<BSmemLayout>::value);
-  static_assert(is_static<CSmemLayout>::value);
+  static_assert(::cute::is_static<ASmemLayout>::value);
+  static_assert(::cute::is_static<BSmemLayout>::value);
+  static_assert(::cute::is_static<CSmemLayout>::value);
 
-  CUTE_STATIC_ASSERT_V(size<0>(ASmemLayout{}) == size<0>(cta_tiler));  // BLK_M
-  CUTE_STATIC_ASSERT_V(size<0>(CSmemLayout{}) == size<0>(cta_tiler));  // BLK_M
-  CUTE_STATIC_ASSERT_V(size<0>(BSmemLayout{}) == size<1>(cta_tiler));  // BLK_N
-  CUTE_STATIC_ASSERT_V(size<1>(CSmemLayout{}) == size<1>(cta_tiler));  // BLK_N
-  CUTE_STATIC_ASSERT_V(size<1>(ASmemLayout{}) == size<2>(cta_tiler));  // BLK_K
-  CUTE_STATIC_ASSERT_V(size<1>(BSmemLayout{}) == size<2>(cta_tiler));  // BLK_K
+  CUTE_STATIC_ASSERT_V(::cute::size<0>(ASmemLayout{}) == ::cute::size<0>(cta_tiler));  // BLK_M
+  CUTE_STATIC_ASSERT_V(::cute::size<0>(CSmemLayout{}) == ::cute::size<0>(cta_tiler));  // BLK_M
+  CUTE_STATIC_ASSERT_V(::cute::size<0>(BSmemLayout{}) == ::cute::size<1>(cta_tiler));  // BLK_N
+  CUTE_STATIC_ASSERT_V(::cute::size<1>(CSmemLayout{}) == ::cute::size<1>(cta_tiler));  // BLK_N
+  CUTE_STATIC_ASSERT_V(::cute::size<1>(ASmemLayout{}) == ::cute::size<2>(cta_tiler));  // BLK_K
+  CUTE_STATIC_ASSERT_V(::cute::size<1>(BSmemLayout{}) == ::cute::size<2>(cta_tiler));  // BLK_K
 
-  CUTE_STATIC_ASSERT_V(congruent(select<0,2>(shape_MNK), dA));         // dA strides for shape MK
-  CUTE_STATIC_ASSERT_V(congruent(select<1,2>(shape_MNK), dB));         // dB strides for shape NK
-  CUTE_STATIC_ASSERT_V(congruent(select<0,1>(shape_MNK), dC));         // dC strides for shape MN
+  CUTE_STATIC_ASSERT_V(::cute::congruent(::cute::select<0,2>(shape_MNK), dA));   // dA strides for shape MK
+  CUTE_STATIC_ASSERT_V(::cute::congruent(::cute::select<1,2>(shape_MNK), dB));   // dB strides for shape NK
+  CUTE_STATIC_ASSERT_V(::cute::congruent(::cute::select<0,1>(shape_MNK), dC));   // dC strides for shape MN
 
   //
   // Full and Tiled Tensors
   //
 
   // Represent the full tensors
-  Tensor mA = make_tensor(make_gmem_ptr(A), select<0,2>(shape_MNK), dA); // (M,K)
-  Tensor mB = make_tensor(make_gmem_ptr(B), select<1,2>(shape_MNK), dB); // (N,K)
-  Tensor mC = make_tensor(make_gmem_ptr(C), select<0,1>(shape_MNK), dC); // (M,N)
+  auto mA = ::cute::make_tensor(::cute::make_gmem_ptr(A), ::cute::select<0,2>(shape_MNK), dA); // (M,K)
+  auto mB = ::cute::make_tensor(::cute::make_gmem_ptr(B), ::cute::select<1,2>(shape_MNK), dB); // (N,K)
+  auto mC = ::cute::make_tensor(::cute::make_gmem_ptr(C), ::cute::select<0,1>(shape_MNK), dC); // (M,N)
 
   // Get the appropriate blocks for this thread block
-  auto cta_coord = make_coord(blockIdx.x, blockIdx.y, _);              // (m,n,k)
-  Tensor gA = local_tile(mA, cta_tiler, cta_coord, Step<_1, X,_1>{});  // (BLK_M,BLK_K,k)
-  Tensor gB = local_tile(mB, cta_tiler, cta_coord, Step< X,_1,_1>{});  // (BLK_N,BLK_K,k)
-  Tensor gC = local_tile(mC, cta_tiler, cta_coord, Step<_1,_1, X>{});  // (BLK_M,BLK_N)
+  auto cta_coord = ::cute::make_coord(blockIdx.x, blockIdx.y, ::cute::_);              // (m,n,k)
+  auto gA = ::cute::local_tile(mA, cta_tiler, cta_coord, ::cute::Step<::cute::_1, ::cute::X,::cute::_1>{});  // (BLK_M,BLK_K,k)
+  auto gB = ::cute::local_tile(mB, cta_tiler, cta_coord, ::cute::Step< ::cute::X,::cute::_1,::cute::_1>{});  // (BLK_N,BLK_K,k)
+  auto gC = ::cute::local_tile(mC, cta_tiler, cta_coord, ::cute::Step<::cute::_1,::cute::_1, ::cute::X>{});  // (BLK_M,BLK_N)
 
   // Shared memory buffers
-  __shared__ TA smemA[cosize_v<ASmemLayout>];
-  __shared__ TB smemB[cosize_v<BSmemLayout>];
-  Tensor sA = make_tensor(make_smem_ptr(smemA), sA_layout);            // (BLK_M,BLK_K)
-  Tensor sB = make_tensor(make_smem_ptr(smemB), sB_layout);            // (BLK_N,BLK_K)
+  __shared__ TA smemA[::cute::cosize_v<ASmemLayout>];
+  __shared__ TB smemB[::cute::cosize_v<BSmemLayout>];
+  auto sA = ::cute::make_tensor(::cute::make_smem_ptr(smemA), sA_layout);            // (BLK_M,BLK_K)
+  auto sB = ::cute::make_tensor(::cute::make_smem_ptr(smemB), sB_layout);            // (BLK_N,BLK_K)
 
   //
   // Partition the copying of A and B tiles across the threads
   //
 
-  // TUTORIAL: Example of simple raked partitioning of ThreadLayouts tA|tB over data A|B tiles
+  auto tAgA = ::cute::local_partition(gA, tA, threadIdx.x);                  // (THR_M,THR_K,k)
+  auto tAsA = ::cute::local_partition(sA, tA, threadIdx.x);                  // (THR_M,THR_K)
 
-  Tensor tAgA = local_partition(gA, tA, threadIdx.x);                  // (THR_M,THR_K,k)
-  Tensor tAsA = local_partition(sA, tA, threadIdx.x);                  // (THR_M,THR_K)
+  auto tBgB = ::cute::local_partition(gB, tB, threadIdx.x);                  // (THR_N,THR_K,k)
+  auto tBsB = ::cute::local_partition(sB, tB, threadIdx.x);                  // (THR_N,THR_K)
 
-  Tensor tBgB = local_partition(gB, tB, threadIdx.x);                  // (THR_N,THR_K,k)
-  Tensor tBsB = local_partition(sB, tB, threadIdx.x);                  // (THR_N,THR_K)
-
-  CUTE_STATIC_ASSERT_V(size<0>(tAgA) == size<0>(tAsA));                // THR_M
-  CUTE_STATIC_ASSERT_V(size<1>(tAgA) == size<1>(tAsA));                // THR_K
-  CUTE_STATIC_ASSERT_V(size<0>(tBgB) == size<0>(tBsB));                // THR_N
-  CUTE_STATIC_ASSERT_V(size<1>(tBgB) == size<1>(tBsB));                // THR_K
+  CUTE_STATIC_ASSERT_V(::cute::size<0>(tAgA) == ::cute::size<0>(tAsA));      // THR_M
+  CUTE_STATIC_ASSERT_V(::cute::size<1>(tAgA) == ::cute::size<1>(tAsA));      // THR_K
+  CUTE_STATIC_ASSERT_V(::cute::size<0>(tBgB) == ::cute::size<0>(tBsB));      // THR_N
+  CUTE_STATIC_ASSERT_V(::cute::size<1>(tBgB) == ::cute::size<1>(tBsB));      // THR_K
 
   //
   // Define A/B partitioning and C accumulators
   //
 
-  // TUTORIAL: Example of partitioning via projections of a ThreadLayout tC
-
   // Partition sA (BLK_M, BLK_K) by the rows of tC
-  Tensor tCsA = local_partition(sA, tC, threadIdx.x, Step<_1, X>{});   // (THR_M,BLK_K)
+  auto tCsA = ::cute::local_partition(sA, tC, threadIdx.x, ::cute::Step<::cute::_1, ::cute::X>{});   // (THR_M,BLK_K)
   // Partition sB (BLK_N, BLK_K) by the cols of tC
-  Tensor tCsB = local_partition(sB, tC, threadIdx.x, Step< X,_1>{});   // (THR_N,BLK_K)
+  auto tCsB = ::cute::local_partition(sB, tC, threadIdx.x, ::cute::Step< ::cute::X,::cute::_1>{});   // (THR_N,BLK_K)
   // Partition gC (M,N) by the tile of tC
-  Tensor tCgC = local_partition(gC, tC, threadIdx.x, Step<_1,_1>{});   // (THR_M,THR_N)
+  auto tCgC = ::cute::local_partition(gC, tC, threadIdx.x, ::cute::Step<::cute::_1,::cute::_1>{});   // (THR_M,THR_N)
 
   // Allocate the accumulators -- same shape/layout as the partitioned data
-  Tensor tCrC = make_tensor_like(tCgC);                                // (THR_M,THR_N)
+  auto tCrC = ::cute::make_tensor_like(tCgC);                                // (THR_M,THR_N)
 
-  CUTE_STATIC_ASSERT_V(size<0>(tCrC) == size<0>(tCgC));                // THR_M
-  CUTE_STATIC_ASSERT_V(size<0>(tCrC) == size<0>(tCsA));                // THR_M
-  CUTE_STATIC_ASSERT_V(size<1>(tCrC) == size<1>(tCgC));                // THR_N
-  CUTE_STATIC_ASSERT_V(size<1>(tCrC) == size<0>(tCsB));                // THR_N
-  CUTE_STATIC_ASSERT_V(size<1>(tCsA) == size<1>(tCsB));                // BLK_K
+  CUTE_STATIC_ASSERT_V(::cute::size<0>(tCrC) == ::cute::size<0>(tCgC));      // THR_M
+  CUTE_STATIC_ASSERT_V(::cute::size<0>(tCrC) == ::cute::size<0>(tCsA));      // THR_M
+  CUTE_STATIC_ASSERT_V(::cute::size<1>(tCrC) == ::cute::size<1>(tCgC));      // THR_N
+  CUTE_STATIC_ASSERT_V(::cute::size<1>(tCrC) == ::cute::size<0>(tCsB));      // THR_N
+  CUTE_STATIC_ASSERT_V(::cute::size<1>(tCsA) == ::cute::size<1>(tCsB));      // BLK_K
 
   // Clear the accumulators
   clear(tCrC);
@@ -208,19 +203,12 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
   for (int k_tile = 0; k_tile < K_TILE_MAX; ++k_tile)
   {
     // Copy gmem to smem with tA|tB thread-partitioned tensors
-    copy(tAgA(_,_,k_tile), tAsA);      // A   (THR_M,THR_K) -> (THR_M,THR_K)
-    copy(tBgB(_,_,k_tile), tBsB);      // B   (THR_N,THR_K) -> (THR_N,THR_K)
-
-    // TUTORIAL: The above call to copy(tAgA(_,_,k_tile), tAsA) is equivalent to
-    //   Tensor tAgAk = tAgA(_,_,k_tile);
-    //   CUTE_UNROLL
-    //   for (int i = 0; i < size(tAsA); ++i) {
-    //     tAsA(i) = tAgAk(i);
-    //   }
+    ::cute::copy(tAgA(::cute::_,::cute::_,k_tile), tAsA);      // A   (THR_M,THR_K) -> (THR_M,THR_K)
+    ::cute::copy(tBgB(::cute::_,::cute::_,k_tile), tBsB);      // B   (THR_N,THR_K) -> (THR_N,THR_K)
 
     #if __CUDA_ARCH__ >= 800
-      cp_async_fence();
-      cp_async_wait<0>();
+      ::cute::cp_async_fence();
+      ::cute::cp_async_wait<0>();
     #else
       // noop; the preceding copies are synchronous already
     #endif
@@ -232,62 +220,60 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
 
     __syncthreads();         // Wait for all threads to read from smem
   }
-
 #endif
 
   //
   // Epilogue
   //
-
-  axpby(alpha, tCrC, beta, tCgC);
-
-  // TUTORIAL: The above call to axpby(alpha, tCrC, beta, tCgC) is equivalent to
-  //   CUTE_UNROLL
-  //   for (int i = 0; i < size(tCrC); ++i) {
-  //     tCgC(i) = alpha * tCrC(i) + beta * tCgC(i);
-  //   }
+  ::cute::axpby(alpha, tCrC, beta, tCgC);
 }
 
 
 //------------------------------------------------------------------------------
 // Helpers: map PlanCuTe tags -> CuTe layouts
 //------------------------------------------------------------------------------
-static inline auto make_smem_layout_A(SmemLayoutTag tag, auto bM, auto bK) {
-    if (tag == SmemLayoutTag::RowMajor)  return make_layout(make_shape(bM, bK));
-    else                                  return make_layout(make_shape(bM, bK), LayoutRight{});
+template<bool Right> static inline auto make_smem_layout_A(::cute::Int bM, ::cute::Int bK) {
+  if constexpr (Right)
+    return ::cute::make_layout(::cute::make_shape(bM, bK), ::cute::LayoutRight{});
+  else
+    return ::cute::make_layout(::cute::make_shape(bM, bK));
 }
-static inline auto make_smem_layout_B(SmemLayoutTag tag, auto bN, auto bK) {
-    if (tag == SmemLayoutTag::RowMajor)  return make_layout(make_shape(bN, bK));
-    else                                  return make_layout(make_shape(bN, bK), LayoutRight{});
+template<bool Right> static inline auto make_smem_layout_B(::cute::Int bN, ::cute::Int bK) {
+  if constexpr (Right)
+    return ::cute::make_layout(::cute::make_shape(bN, bK), ::cute::LayoutRight{});
+  else
+    return ::cute::make_layout(::cute::make_shape(bN, bK));
 }
-static inline auto make_smem_layout_C(SmemLayoutTag tag, auto bM, auto bN) {
-    if (tag == SmemLayoutTag::RowMajor)  return make_layout(make_shape(bM, bN));
-    else                                  return make_layout(make_shape(bM, bN), LayoutRight{});
+template<bool Right> static inline auto make_smem_layout_C(::cute::Int bM, ::cute::Int bN) {
+  if constexpr (Right)
+    return ::cute::make_layout(::cute::make_shape(bM, bN), ::cute::LayoutRight{});
+  else
+    return ::cute::make_layout(::cute::make_shape(bM, bN));
 }
 
-static inline auto make_thread_layout_A(ThreadLayoutTag tag) {
-    if (tag == ThreadLayoutTag::RowMajor)
-        return make_layout(make_shape(Int<32>{}, Int< 8>{}));
-    else
-        return make_layout(make_shape(Int<32>{}, Int< 8>{}), LayoutRight{});
+template<bool Right> static inline auto make_thread_layout_A() {
+  if constexpr (Right)
+    return ::cute::make_layout(::cute::make_shape(::cute::Int<32>{}, ::cute::Int<8>{}), ::cute::LayoutRight{});
+  else
+    return ::cute::make_layout(::cute::make_shape(::cute::Int<32>{}, ::cute::Int<8>{}));
 }
-static inline auto make_thread_layout_B(ThreadLayoutTag tag) {
-    if (tag == ThreadLayoutTag::RowMajor)
-        return make_layout(make_shape(Int<32>{}, Int< 8>{}));
-    else
-        return make_layout(make_shape(Int<32>{}, Int< 8>{}), LayoutRight{});
+template<bool Right> static inline auto make_thread_layout_B() {
+  if constexpr (Right)
+    return ::cute::make_layout(::cute::make_shape(::cute::Int<32>{}, ::cute::Int<8>{}), ::cute::LayoutRight{});
+  else
+    return ::cute::make_layout(::cute::make_shape(::cute::Int<32>{}, ::cute::Int<8>{}));
 }
-static inline auto make_thread_layout_C(ThreadLayoutTag tag) {
-    if (tag == ThreadLayoutTag::RowMajor)
-        return make_layout(make_shape(Int<16>{}, Int<16>{}));
-    else
-        return make_layout(make_shape(Int<16>{}, Int<16>{}), LayoutRight{});
+template<bool Right> static inline auto make_thread_layout_C() {
+  if constexpr (Right)
+    return ::cute::make_layout(::cute::make_shape(::cute::Int<16>{}, ::cute::Int<16>{}), ::cute::LayoutRight{});
+  else
+    return ::cute::make_layout(::cute::make_shape(::cute::Int<16>{}, ::cute::Int<16>{}));
 }
 
 //------------------------------------------------------------------------------
 // Templated tile-specialized launcher
 //------------------------------------------------------------------------------
-template<int BM, int BN, int BK>
+template<int BM,int BN,int BK, bool RightA,bool RightB,bool RightC, bool NTPath>
 static cudaError_t
 launch_for_tiles(const PlanCuTe& p,
                  char ta, char tb,
@@ -303,56 +289,63 @@ launch_for_tiles(const PlanCuTe& p,
     auto M = int(m);
     auto N = int(n);
     auto K = int(k);
-    auto prob_shape = make_shape(M, N, K);             // (M,N,K)
-
-    // Strides depend on path (NT vs TN)
-    //   NT: A (dM, dK)=(1,ldA), B (dN, dK)=(1,ldB), C (dM, dN)=(1,ldC)
-    //   TN: A (dM, dK)=(ldA,1), B (dN, dK)=(ldB,1), C same
-    const bool isNT = (p.path == PlanCuTe::Path::NT);
-    auto dA = isNT ? make_stride(Int<1>{}, ldA) : make_stride(ldA, Int<1>{});
-    auto dB = isNT ? make_stride(Int<1>{}, ldB) : make_stride(ldB, Int<1>{});
-    auto dC =         make_stride(Int<1>{}, ldC);
+    auto prob_shape = ::cute::make_shape(M, N, K);             // (M,N,K)
 
     // CTA tile (compile-time)
-    auto bM = Int<BM>{};
-    auto bN = Int<BN>{};
-    auto bK = Int<BK>{};
-    auto cta_tiler = make_shape(bM, bN, bK);
+    auto bM = ::cute::Int<BM>{};
+    auto bN = ::cute::Int<BN>{};
+    auto bK = ::cute::Int<BK>{};
+    auto cta_tiler = ::cute::make_shape(bM, bN, bK);
 
     // Shared memory layouts
-    auto sA = make_smem_layout_A(p.sA, bM, bK);
-    auto sB = make_smem_layout_B(p.sB, bN, bK);
-    auto sC = make_smem_layout_C(p.sC, bM, bN);
-
+    auto sA = make_smem_layout_A<RightA>(bM, bK);
+    auto sB = make_smem_layout_B<RightB>(bN, bK);
+    auto sC = make_smem_layout_C<RightC>(bM, bN);
+    
     // Thread layouts
-    auto tA = make_thread_layout_A(p.tA);
-    auto tB = make_thread_layout_B(p.tB);
-    auto tC = make_thread_layout_C(p.tC);
+    auto tA = make_thread_layout_A<RightA>();
+    auto tB = make_thread_layout_B<RightB>();
+    auto tC = make_thread_layout_C<RightC>();
 
     // Launch configuration
-    dim3 dimBlock(size(tC));
-    dim3 dimGrid(size(ceil_div(M, bM)),
-                 size(ceil_div(N, bN)));
+    dim3 dimBlock(::cute::size(tC));
+    dim3 dimGrid(::cute::size(::cute::ceil_div(M, bM)),
+                 ::cute::size(::cute::ceil_div(N, bN)));
 
     // Optional overrides from plan
     if (p.override_block_threads > 0) dimBlock.x = static_cast<unsigned>(p.override_block_threads);
     if (p.override_grid_m        > 0) dimGrid.x  = static_cast<unsigned>(p.override_grid_m);
     if (p.override_grid_n        > 0) dimGrid.y  = static_cast<unsigned>(p.override_grid_n);
-
+    
+    if constexpr (NTPath) {
+      auto dA = ::cute::make_stride(::cute::Int<1>{}, ldA);
+      auto dB = ::cute::make_stride(::cute::Int<1>{}, ldB);
+      auto dC = ::cute::make_stride(::cute::Int<1>{}, ldC);
+      gemm_device<<<dimGrid, dimBlock, 0, stream>>>(
+          prob_shape, cta_tiler,
+          A, dA, sA, tA,
+          B, dB, sB, tB,
+          C, dC, sC, tC,
+          alpha, beta);      
+    }
+    else{
+      auto dA = ::cute::make_stride(ldA, ::cute::Int<1>{});
+      auto dB = ::cute::make_stride(ldB, ::cute::Int<1>{});
+      auto dC = ::cute::make_stride(::cute::Int<1>{}, ldC);
+      gemm_device<<<dimGrid, dimBlock, 0, stream>>>(
+          prob_shape, cta_tiler,
+          A, dA, sA, tA,
+          B, dB, sB, tB,
+          C, dC, sC, tC,
+          alpha, beta);      
+    }
     // Launch device kernel
-    gemm_device<<<dimGrid, dimBlock, 0, stream>>>(
-        prob_shape, cta_tiler,
-        A, dA, sA, tA,
-        B, dB, sB, tB,
-        C, dC, sC, tC,
-        alpha, beta);
 
     return cudaGetLastError();
 }
 
 //------------------------------------------------------------------------------
 // Runtime → static dispatcher for tile sizes
-// (CuTe needs compile-time Int<BM/BN/BK>; we map runtime plan values to a set)
 //------------------------------------------------------------------------------
 static cudaError_t
 dispatch_tiles(const PlanCuTe& p,
@@ -366,9 +359,79 @@ dispatch_tiles(const PlanCuTe& p,
                cudaStream_t stream)
 {
     // Minimal initial support; extend with more cases as you add kernels.
+    const bool NT = (p.path == PlanCuTe::Path::NT);
+    const bool rA = (p.sA == SmemLayoutTag::ColMajor); // or your mapping
+    const bool rB = (p.sB == SmemLayoutTag::ColMajor);
+    const bool rC = (p.sC == SmemLayoutTag::ColMajor);
     if (p.blk_m == 128 && p.blk_n == 128 && p.blk_k == 8) {
-        return launch_for_tiles<128,128,8>(p, ta, tb, m, n, k,
-                                           alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+      // Build a bitmask just to branch cleanly (bit0=rA, bit1=rB, bit2=rC, bit3=NT)
+      const int mask = (rA ? 1 : 0) | (rB ? 2 : 0) | (rC ? 4 : 0) | (NT ? 8 : 0);
+
+      switch (mask) {
+          case 0:  // rA=0 rB=0 rC=0 NT=0
+              return launch_for_tiles<128,128,8,false,false,false,false>(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 1:  // rA=1 rB=0 rC=0 NT=0
+              return launch_for_tiles<128,128,8,true ,false,false,false>(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 2:  // rA=0 rB=1 rC=0 NT=0
+              return launch_for_tiles<128,128,8,false,true ,false,false>(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 3:  // rA=1 rB=1 rC=0 NT=0
+              return launch_for_tiles<128,128,8,true ,true ,false,false>(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 4:  // rA=0 rB=0 rC=1 NT=0
+              return launch_for_tiles<128,128,8,false,false,true ,false>(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 5:  // rA=1 rB=0 rC=1 NT=0
+              return launch_for_tiles<128,128,8,true ,false,true ,false>(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 6:  // rA=0 rB=1 rC=1 NT=0
+              return launch_for_tiles<128,128,8,false,true ,true ,false>(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 7:  // rA=1 rB=1 rC=1 NT=0
+              return launch_for_tiles<128,128,8,true ,true ,true ,false>(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 8:  // rA=0 rB=0 rC=0 NT=1
+              return launch_for_tiles<128,128,8,false,false,false,true >(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 9:  // rA=1 rB=0 rC=0 NT=1
+              return launch_for_tiles<128,128,8,true ,false,false,true >(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 10: // rA=0 rB=1 rC=0 NT=1
+              return launch_for_tiles<128,128,8,false,true ,false,true >(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 11: // rA=1 rB=1 rC=0 NT=1
+              return launch_for_tiles<128,128,8,true ,true ,false,true >(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 12: // rA=0 rB=0 rC=1 NT=1
+              return launch_for_tiles<128,128,8,false,false,true ,true >(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 13: // rA=1 rB=0 rC=1 NT=1
+              return launch_for_tiles<128,128,8,true ,false,true ,true >(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 14: // rA=0 rB=1 rC=1 NT=1
+              return launch_for_tiles<128,128,8,false,true ,true ,true >(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+
+          case 15: // rA=1 rB=1 rC=1 NT=1
+              return launch_for_tiles<128,128,8,true ,true ,true ,true >(
+                  p, ta, tb, m, n, k, alpha, A, ldA, B, ldB, beta, C, ldC, stream);
+      }
     }
     // Example extensions:
     // if (p.blk_m == 128 && p.blk_n == 64 && p.blk_k == 8)  return launch_for_tiles<128,64,8>(...);
