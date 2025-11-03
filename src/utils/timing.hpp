@@ -13,7 +13,7 @@ namespace dphpc::timing {
 struct Event {
     cudaEvent_t ev{};
     explicit Event(unsigned flags = cudaEventDefault) {
-        DPHPC_CUDA_CHECK(cudaEventCreateWithFlags(&ev, flags));
+        dphpc::cudacheck::CUDA_CHECK(cudaEventCreateWithFlags(&ev, flags));
     }
     ~Event() { if (ev) cudaEventDestroy(ev); }
     Event(const Event&) = delete;
@@ -30,12 +30,12 @@ struct CudaTimer {
     explicit CudaTimer(cudaStream_t s = 0)
         : stream(s), start(cudaEventDefault), stop(cudaEventDefault) {}
 
-    void record_start() { DPHPC_CUDA_CHECK(cudaEventRecord(start.ev, stream)); }
-    void record_stop()  { DPHPC_CUDA_CHECK(cudaEventRecord(stop.ev,  stream)); }
+    void record_start() { dphpc::cudacheck::CUDA_CHECK(cudaEventRecord(start.ev, stream)); }
+    void record_stop()  { dphpc::cudacheck::CUDA_CHECK(cudaEventRecord(stop.ev,  stream)); }
     float elapsed_ms()  {
-        DPHPC_CUDA_CHECK(cudaEventSynchronize(stop.ev));
+        dphpc::cudacheck::CUDA_CHECK(cudaEventSynchronize(stop.ev));
         float ms = 0.0f;
-        DPHPC_CUDA_CHECK(cudaEventElapsedTime(&ms, start.ev, stop.ev));
+        dphpc::cudacheck::CUDA_CHECK(cudaEventElapsedTime(&ms, start.ev, stop.ev));
         return ms;
     }
 };
