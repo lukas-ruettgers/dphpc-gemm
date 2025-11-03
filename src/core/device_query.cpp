@@ -1,29 +1,46 @@
 #include "device_query.hpp"
-#include "../utils/cuda_check.hpp"   // uses dphpc::cudacheck::CUDA_CHECK(...)
-#include <cuda_runtime_api.h>
+#include "../utils/cuda_check.hpp"
+#include <cuda_runtime.h>          // broader than cuda_runtime_api.h; helps with enums
 #include <sstream>
 #include <mutex>
 #include <array>
+
+#ifndef CUDART_VERSION
+#define CUDART_VERSION 0
+#endif
 
 namespace dphpc::device_query {
 
 static Arch sm_to_arch(int major, int minor) {
     const int cc = major * 10 + minor;
-    if      (cc >= 90) return Arch::SM90;
-    else if (cc >= 89) return Arch::SM89;
-    else if (cc >= 86) return Arch::SM86;
-    else if (cc >= 80) return Arch::SM80;
-    else if (cc >= 75) return Arch::SM75;
-    else if (cc >= 70) return Arch::SM70;
+
+    // Keep your existing buckets; accept future CCs gracefully.
+    if      (cc >= 100) return Arch::SM90; // treat SM100+ as ">= Hopper" bucket if your enum lacks SM100
+    else if (cc >= 90)  return Arch::SM90;
+    else if (cc >= 89)  return Arch::SM89;
+    else if (cc >= 86)  return Arch::SM86;
+    else if (cc >= 80)  return Arch::SM80;
+    else if (cc >= 75)  return Arch::SM75;
+    else if (cc >= 70)  return Arch::SM70;
+    else if (cc >= 62)  return Arch::SM70; // Pascal GP10x (61/62) – closest bucket in your enum
+    else if (cc >= 60)  return Arch::SM70; // Pascal GP100 (60)
     return Arch::Unknown;
 }
 
 static double compute_theoretical_bw_gbps(int mem_clock_khz, int bus_width_bits) {
-    // DDR effective rate: 2 transfers per clock. memoryClockRate is in kHz.
-    // GB/s = 2 * clock(Hz) * (bus_width_bits/8 bytes) / 1e9
+    // Effective DDR: 2 transfers per clock.
     const double clock_hz = static_cast<double>(mem_clock_khz) * 1000.0;
     const double bytes_per_cycle = static_cast<double>(bus_width_bits) / 8.0;
     return 2.0 * clock_hz * bytes_per_cycle / 1e9;
+}
+
+// Small helper: query an attribute if the header exposes it (via version checks), else default.
+static int get_attr_or(int device_id, int attr_enum_value, bool try_query, int fallback) {
+    if (!try_query) return fallback;
+    int v = 0;
+    if (cudaDeviceGetAttribute(&v, static_cast<cudaDeviceAttr>(attr_enum_value), device_id) == cudaSuccess)
+        return v;
+    return fallback;
 }
 
 static void fill_feature_flags(DeviceInfo& d) {
@@ -32,63 +49,127 @@ static void fill_feature_flags(DeviceInfo& d) {
     d.supports_tf32     = (cc >= 80);  // Ampere+
     d.supports_bf16     = (cc >= 80);  // Ampere+
     d.supports_fp8      = (cc >= 90);  // Hopper+
-    d.supports_cp_async = (cc >= 80);  // cp.async (Ampere+)
+    d.supports_cp_async = (cc >= 80);  // Ampere+
 }
 
 static void query_core(cudaDeviceProp& props, DeviceInfo& d) {
-    d.name                = props.name;
-    d.sm_major            = props.major;
-    d.sm_minor            = props.minor;
-    d.arch                = sm_to_arch(props.major, props.minor);
-    d.multiprocessors     = props.multiProcessorCount;
-    d.warp_size           = props.warpSize;
-    d.max_threads_per_sm  = props.maxThreadsPerMultiProcessor;
-    d.max_threads_per_block = props.maxThreadsPerBlock;
+    // Stable basics
+    d.name                   = props.name;
+    d.sm_major               = props.major;
+    d.sm_minor               = props.minor;
+    d.arch                   = sm_to_arch(props.major, props.minor);
+    d.multiprocessors        = props.multiProcessorCount;
+    d.max_threads_per_sm     = props.maxThreadsPerMultiProcessor;
+    d.max_threads_per_block  = props.maxThreadsPerBlock;
+    d.global_mem_bytes       = props.totalGlobalMem;
 
-    d.global_mem_bytes    = props.totalGlobalMem;
-    d.memory_clock_khz    = props.memoryClockRate;
+    // Prefer attributes where available; fall back to props.* only for very old toolkits.
+    // Warp size (attribute has been around forever)
+    d.warp_size = get_attr_or(d.device_id,
+                              cudaDevAttrWarpSize,
+                              /*try_query=*/true,
+                              /*fallback=*/props.warpSize);
+
+    // L2 cache size
+#if CUDART_VERSION >= 8000
+    d.l2_cache_bytes = get_attr_or(d.device_id,
+                                   cudaDevAttrL2CacheSize,
+                                   /*try_query=*/true,
+                                   /*fallback=*/props.l2CacheSize);
+#else
+    d.l2_cache_bytes = props.l2CacheSize;
+#endif
+
+    // Memory bus width (bits) and memory clock (kHz)
+#if CUDART_VERSION >= 8000
+    d.memory_bus_width_bits = get_attr_or(d.device_id,
+                                          cudaDevAttrGlobalMemoryBusWidth,
+                                          /*try_query=*/true,
+                                          /*fallback=*/props.memoryBusWidth);
+    d.memory_clock_khz      = get_attr_or(d.device_id,
+                                          cudaDevAttrMemoryClockRate,
+                                          /*try_query=*/true,
+                                          /*fallback=*/
+#if defined(__CUDACC__) || defined(__CUDA_ARCH__) || defined(__CUDACC_RTC__)
+                                          props.memoryClockRate
+#else
+                                          0
+#endif
+                                          );
+#else
     d.memory_bus_width_bits = props.memoryBusWidth;
+# if defined(__CUDACC__) || defined(__CUDA_ARCH__) || defined(__CUDACC_RTC__)
+    d.memory_clock_khz      = props.memoryClockRate;
+# else
+    d.memory_clock_khz      = 0;
+# endif
+#endif
+
     d.theoretical_mem_bw_GBps = compute_theoretical_bw_gbps(d.memory_clock_khz, d.memory_bus_width_bits);
 
-    d.shared_mem_per_block       = props.sharedMemPerBlock;
-    d.shared_mem_per_sm          = props.sharedMemPerMultiprocessor;
-    d.regs_per_block             = props.regsPerBlock;
-    d.l2_cache_bytes             = props.l2CacheSize;
+    // Shared memory sizes
+    d.shared_mem_per_block = props.sharedMemPerBlock; // legacy name; attribute below may prefer newer values
+#if CUDART_VERSION >= 8000
+    d.shared_mem_per_sm    = get_attr_or(d.device_id,
+                                         cudaDevAttrMaxSharedMemoryPerMultiprocessor,
+                                         /*try_query=*/true,
+                                         /*fallback=*/props.sharedMemPerMultiprocessor);
+#else
+    d.shared_mem_per_sm    = props.sharedMemPerMultiprocessor;
+#endif
 
-    // Some values aren’t in cudaDeviceProp; query with cudaDeviceGetAttribute
-    int attr = 0;
+    // Opt-in per-block shared memory (if unavailable, fall back to regular per-block)
+#if CUDART_VERSION >= 8000
+    d.shared_mem_per_block_optin = get_attr_or(d.device_id,
+                                               cudaDevAttrMaxSharedMemoryPerBlockOptin,
+                                               /*try_query=*/true,
+                                               d.shared_mem_per_block);
+#else
+    d.shared_mem_per_block_optin = d.shared_mem_per_block;
+#endif
 
-    if (cudaDeviceGetAttribute(&attr, cudaDevAttrMaxSharedMemoryPerBlockOptin, d.device_id) == cudaSuccess) {
-        d.shared_mem_per_block_optin = attr;
-    } else {
-        d.shared_mem_per_block_optin = d.shared_mem_per_block; // fallback
-    }
+    // Registers
+#if CUDART_VERSION >= 8000
+    d.regs_per_multiprocessor = get_attr_or(d.device_id,
+                                            cudaDevAttrMaxRegistersPerMultiprocessor,
+                                            /*try_query=*/true,
+                                            /*fallback=*/0);
+    // Prefer attribute for regs per block if present
+    d.regs_per_block = get_attr_or(d.device_id,
+                                   cudaDevAttrMaxRegistersPerBlock,
+                                   /*try_query=*/true,
+                                   /*fallback=*/props.regsPerBlock);
+    // Per-thread register limit (guard—older toolkits may not expose)
+#else
+    d.regs_per_multiprocessor = 0;
+    d.regs_per_block          = props.regsPerBlock;
+    // leave d.regs_per_thread as default
+#endif
 
-    if (cudaDeviceGetAttribute(&attr, cudaDevAttrMaxRegistersPerMultiprocessor, d.device_id) == cudaSuccess) {
-        d.regs_per_multiprocessor = attr;
-    }
-    if (cudaDeviceGetAttribute(&attr, cudaDevAttrMaxRegistersPerBlock, d.device_id) == cudaSuccess) {
-        d.regs_per_block = attr; // prefer attribute when available
-    }
-    if (cudaDeviceGetAttribute(&attr, cudaDevAttrMaxBlocksPerMultiprocessor, d.device_id) == cudaSuccess) {
-        d.max_blocks_per_sm = attr;
-    }
-    if (cudaDeviceGetAttribute(&attr, cudaDevAttrConcurrentKernels, d.device_id) == cudaSuccess) {
-        d.concurrent_kernels = (attr != 0);
-    }
-    if (cudaDeviceGetAttribute(&attr, cudaDevAttrCooperativeLaunch, d.device_id) == cudaSuccess) {
-        d.cooperative_launch = (attr != 0);
-    }
-    if (cudaDeviceGetAttribute(&attr, cudaDevAttrCooperativeMultiDeviceLaunch, d.device_id) == cudaSuccess) {
-        d.cooperative_multi = (attr != 0);
-    }
-    if (cudaDeviceGetAttribute(&attr, cudaDevAttrPageableMemoryAccess, d.device_id) == cudaSuccess) {
-        d.pageable_mem_access = (attr != 0);
-    }
-    // Shared memory bank size (typical 32B; not always surfaced—keep heuristic default)
-    if (cudaDeviceGetAttribute(&attr, cudaDevAttrMaxSharedMemoryPerMultiprocessor, d.device_id) == cudaSuccess) {
-        d.shared_mem_per_sm = attr; // prefer attribute path
-    }
+    // Occupancy-related caps
+#if CUDART_VERSION >= 8000
+    d.max_blocks_per_sm = get_attr_or(d.device_id,
+                                      cudaDevAttrMaxBlocksPerMultiprocessor,
+                                      /*try_query=*/true,
+                                      /*fallback=*/d.max_blocks_per_sm);
+#endif
+
+    // Capabilities
+#if CUDART_VERSION >= 8000
+    d.concurrent_kernels = (get_attr_or(d.device_id, cudaDevAttrConcurrentKernels, true, 0) != 0);
+    d.cooperative_launch = (get_attr_or(d.device_id, cudaDevAttrCooperativeLaunch, true, 0) != 0);
+# if CUDART_VERSION >= 9000
+    d.cooperative_multi  = (get_attr_or(d.device_id, cudaDevAttrCooperativeMultiDeviceLaunch, true, 0) != 0);
+# else
+    d.cooperative_multi  = false;
+# endif
+    d.pageable_mem_access = (get_attr_or(d.device_id, cudaDevAttrPageableMemoryAccess, true, 0) != 0);
+#else
+    d.concurrent_kernels  = (props.asyncEngineCount > 0); // weak fallback
+    d.cooperative_launch  = false;
+    d.cooperative_multi   = false;
+    d.pageable_mem_access = false;
+#endif
 }
 
 static void query_versions(DeviceInfo& d) {
