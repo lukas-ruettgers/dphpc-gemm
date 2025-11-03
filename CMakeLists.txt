@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.25)
 
 project(dphpc_gemm LANGUAGES CXX CUDA)
 
+# Choose your GPUs (A100=80, H100=90). You can list multiple, e.g. "80;90".
+set(CMAKE_CUDA_ARCHITECTURES 80)
+
+# Pull in CUDA Toolkit imported targets (CUDA::cudart, CUDA::nvToolsExt, etc.)
+find_package(CUDAToolkit REQUIRED)
+
 # --- Language standards (no extra flags) -------------------------------------
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -41,6 +47,10 @@ target_include_directories(gemm_backend_cute
   PRIVATE ${CUTLASS_INCLUDE_DIRS} ${CUTE_INCLUDE_DIR}
 )
 target_link_libraries(gemm_backend_cute PRIVATE gemm_core)
+# target_link_libraries(gemm_backend_cute PRIVATE gemm_core CUDA::cudart CUDA::nvtx3)
+target_compile_options(gemm_backend_cute PRIVATE
+  $<$<COMPILE_LANGUAGE:CUDA>:-include ${CMAKE_SOURCE_DIR}/cmake/cuda_glibc_compat.h>
+)
 
 # --- Executable (entry point: src/core/problem.cpp) --------------------------
 add_executable(gemm
@@ -48,6 +58,7 @@ add_executable(gemm
 )
 target_include_directories(gemm PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(gemm PRIVATE gemm_core gemm_backend_cute)
+# target_link_libraries(gemm            PRIVATE gemm_core gemm_backend_cute CUDA::cudart CUDA::nvtx3)
 
 # Optional: make explicit (default is ${CMAKE_BINARY_DIR})
 set_target_properties(gemm PROPERTIES
