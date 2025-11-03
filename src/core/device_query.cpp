@@ -159,7 +159,19 @@ static void query_core(cudaDeviceProp& props, DeviceInfo& d) {
     d.concurrent_kernels = (get_attr_or(d.device_id, cudaDevAttrConcurrentKernels, true, 0) != 0);
     d.cooperative_launch = (get_attr_or(d.device_id, cudaDevAttrCooperativeLaunch, true, 0) != 0);
 # if CUDART_VERSION >= 9000
-    d.cooperative_multi  = (get_attr_or(d.device_id, cudaDevAttrCooperativeMultiDeviceLaunch, true, 0) != 0);
+    // Cooperative multi-device kernel launch capability (deprecated API; not in all headers)
+    #if defined(cudaDevAttrCooperativeMultiDeviceLaunch)
+    {
+        int v = 0;
+        if (cudaDeviceGetAttribute(&v, cudaDevAttrCooperativeMultiDeviceLaunch, d.device_id) == cudaSuccess)
+            d.cooperative_multi = (v != 0);
+        else
+            d.cooperative_multi = false;
+    }
+    #else
+        // Header doesn't define the attribute (or it was removed). Treat as unsupported.
+        d.cooperative_multi = false;
+    #endif
 # else
     d.cooperative_multi  = false;
 # endif
