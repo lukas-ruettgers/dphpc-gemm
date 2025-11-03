@@ -13,6 +13,8 @@ export CUDACXX=${CUDA_HOME}/bin/nvcc
 
 ## Build
 
+Assuming cutlass is cloned in the `..` directory
+
 ```
 mkdir -p build && cd build
 cmake ..
