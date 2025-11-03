@@ -13,7 +13,7 @@ export CUDACXX=${CUDA_HOME}/bin/nvcc
 
 ## Build
 
-Assuming cutlass is cloned in the `..` directory
+- Modify the path to CUTLASS repo in `CMakeLists.txt` (line 10)
 
 ```
 mkdir -p build && cd build
