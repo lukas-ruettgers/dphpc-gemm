@@ -61,7 +61,7 @@ int main(int argc, char** argv)
     bool verify = false;
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
-        if (a == "-h" || a == "--help") { print_usage(argv[0]); return 0; }
+        if (a == "-h" || a == "--help") { dphpc::print_usage(argv[0]); return 0; }
         if (a == "--verify") verify = true;
     }
 
@@ -80,18 +80,18 @@ int main(int argc, char** argv)
     if (argi < pos.size()) prob.N = std::stoll(pos[argi++]); else prob.N = 5120;
     if (argi < pos.size()) prob.K = std::stoll(pos[argi++]); else prob.K = 4096;
 
-    if (argi < pos.size()) prob.transA = parse_trans(pos[argi++]);
-    if (argi < pos.size()) prob.transB = parse_trans(pos[argi++]);
-    if (argi < pos.size()) prob.transC = parse_trans(pos[argi++]);
+    if (argi < pos.size()) prob.transA = dphpc::parse_trans(pos[argi++]);
+    if (argi < pos.size()) prob.transB = dphpc::parse_trans(pos[argi++]);
+    if (argi < pos.size()) prob.transC = dphpc::parse_trans(pos[argi++]);
 
-    if (argi < pos.size()) prob.typeA = parse_dtype(pos[argi++]);
-    if (argi < pos.size()) prob.typeB = parse_dtype(pos[argi++]);
-    if (argi < pos.size()) prob.typeC = parse_dtype(pos[argi++]);
-    if (argi < pos.size()) prob.typeD = parse_dtype(pos[argi++]);
+    if (argi < pos.size()) prob.typeA = dphpc::parse_dtype(pos[argi++]);
+    if (argi < pos.size()) prob.typeB = dphpc::parse_dtype(pos[argi++]);
+    if (argi < pos.size()) prob.typeC = dphpc::parse_dtype(pos[argi++]);
+    if (argi < pos.size()) prob.typeD = dphpc::parse_dtype(pos[argi++]);
 
-    if (argi < pos.size()) prob.wmma_available    = parse_bool(pos[argi++]);
-    if (argi < pos.size()) prob.cutlass_available = parse_bool(pos[argi++]);
-    if (argi < pos.size()) prob.cute_available    = parse_bool(pos[argi++]);
+    if (argi < pos.size()) prob.wmma_available    = dphpc::parse_bool(pos[argi++]);
+    if (argi < pos.size()) prob.cutlass_available = dphpc::parse_bool(pos[argi++]);
+    if (argi < pos.size()) prob.cute_available    = dphpc::parse_bool(pos[argi++]);
 
     // Query and attach the current device info to the problem
     try {
