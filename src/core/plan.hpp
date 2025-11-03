@@ -16,6 +16,8 @@ enum class BackendKind : uint8_t { WMMA, Cutlass, CuTe };
 // non-templated and uses enums/ints so the planner/dispatcher can pass it
 // around easily. Backend adaptors will translate these into concrete types.
 struct Plan {
+    virtual ~Plan() = default;          // <-- make base polymorphic
+    
     BackendKind backend{BackendKind::CuTe};
 
     // Shared datatypes for kernel operands / scalars
