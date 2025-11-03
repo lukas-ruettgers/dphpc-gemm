@@ -38,6 +38,10 @@
 
 #include <cuda_runtime.h>
 #include <cute/tensor.hpp>
+#include <cute/layout.hpp>
+#include <cute/stride.hpp>
+#include <cute/algorithm/copy.hpp>
+#include <cute/algorithm/gemm.hpp>
 
 #include "cutlass/util/print_error.hpp"
 #include "cutlass/util/GPU_Clock.hpp"
@@ -224,19 +228,7 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
     __syncthreads();         // Wait for all threads to write to smem
 
     // Compute gemm on tC thread-partitioned smem
-    gemm(tCsA, tCsB, tCrC);            // (THR_M,THR_N) += (THR_M,BLK_K) * (THR_N,BLK_K)
-
-    // TUTORIAL: The above call to gemm(tCsA, tCsB, tCrC) is equivalent to
-    //   CUTE_UNROLL
-    //   for (int k = 0; k < size<1>(tCsA); ++k) {
-    //     CUTE_UNROLL
-    //     for (int m = 0; m < size<0>(tCrC); ++m) {
-    //       CUTE_UNROLL
-    //       for (int n = 0; n < size<1>(tCrC); ++n) {
-    //         tCrC(m,n) += tCsA(m,k) * tCsB(n,k);
-    //       }
-    //     }
-    //   }
+    ::cute::gemm(tCsA, tCsB, tCrC);            // (THR_M,THR_N) += (THR_M,BLK_K) * (THR_N,BLK_K)
 
     __syncthreads();         // Wait for all threads to read from smem
   }
