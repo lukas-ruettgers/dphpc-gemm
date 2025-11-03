@@ -9,10 +9,8 @@ module load cuda/13.0
 module save default
 
 # Clean env
-export CUDA_HOME=/cluster/data/cuda/13.0.0
-export PATH="$CUDA_HOME/bin:$PATH"
+export CUDA_HOME=$(dirname $(dirname $(which nvcc)))
 export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$CUDA_HOME/nvvm/lib64"
-unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH LD_PRELOAD
 ```
 
 ### Compile flags for profiling
@@ -188,9 +186,18 @@ Add `-maxrregcount=64` to `nvcc`
 2. Create a CMake Linux project in Visual Studio [(Ref)](https://learn.microsoft.com/en-us/cpp/linux/cmake-linux-project?view=msvc-170)
 
 # BUILD
+Make sure that you have followed the environment setup [at the top](#compile-for-5060-ti-cc-120).
+
 ```
-mkdir -p build && cd build
-cmake ..
-cmake --build . -j
+cmake -S . -DCMAKE_CUDA_COMPILER=$CUDA_HOME/bin/nvcc -B build
+cmake --build build -j
 ./gemm  # your args
+```
+
+## Build CUTLASS
+```
+cmake .. -DCUTLASS_ARCHITECTURES="sm_120;sm_110;sm_100;sm_90;sm_80" \
+         -DCUTLASS_ENABLE_TENSOR_OP_MATH=ON \
+         -DCMAKE_BUILD_TYPE=Release
+make -j
 ```
