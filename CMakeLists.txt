@@ -46,8 +46,7 @@ target_include_directories(gemm_backend_cute
   PUBLIC  ${CMAKE_SOURCE_DIR}/src
   PRIVATE ${CUTLASS_INCLUDE_DIRS} ${CUTE_INCLUDE_DIR}
 )
-target_link_libraries(gemm_backend_cute PRIVATE gemm_core)
-# target_link_libraries(gemm_backend_cute PRIVATE gemm_core CUDA::cudart CUDA::nvtx3)
+target_link_libraries(gemm_backend_cute PRIVATE gemm_core CUDA::cudart CUDA::nvtx3)
 target_compile_options(gemm_backend_cute PRIVATE
   $<$<COMPILE_LANGUAGE:CUDA>:-include ${CMAKE_SOURCE_DIR}/cmake/cuda_glibc_compat.h>
 )
@@ -57,8 +56,7 @@ add_executable(gemm
   src/core/problem.cpp
 )
 target_include_directories(gemm PRIVATE ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(gemm PRIVATE gemm_core gemm_backend_cute)
-# target_link_libraries(gemm            PRIVATE gemm_core gemm_backend_cute CUDA::cudart CUDA::nvtx3)
+target_link_libraries(gemm            PRIVATE gemm_core gemm_backend_cute CUDA::cudart CUDA::nvtx3)
 
 # Optional: make explicit (default is ${CMAKE_BINARY_DIR})
 set_target_properties(gemm PROPERTIES
