@@ -29,7 +29,9 @@ add_library(gemm_core
   src/utils/data.cpp
 )
 target_include_directories(gemm_core
-  PUBLIC  ${CMAKE_SOURCE_DIR}/src
+  PUBLIC  
+    ${CMAKE_SOURCE_DIR}/src
+    ${CUDAToolkit_INCLUDE_DIRS}
   PRIVATE ${CUTLASS_INCLUDE_DIRS} ${CUTE_INCLUDE_DIR}
 )
 target_link_libraries(gemm_core
@@ -46,7 +48,7 @@ set_target_properties(gemm_backend_cute PROPERTIES
   CUDA_SEPARABLE_COMPILATION ON
 )
 target_include_directories(gemm_backend_cute
-  PUBLIC  ${CMAKE_SOURCE_DIR}/src
+  PUBLIC  ${CMAKE_SOURCE_DIR}/src ${CUDAToolkit_INCLUDE_DIRS}
   PRIVATE ${CUTLASS_INCLUDE_DIRS} ${CUTE_INCLUDE_DIR}
 )
 target_link_libraries(gemm_backend_cute PRIVATE gemm_core CUDA::cudart CUDA::nvtx3)
@@ -58,7 +60,9 @@ target_compile_options(gemm_backend_cute PRIVATE
 add_executable(gemm
   src/core/problem.cpp
 )
-target_include_directories(gemm PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(gemm 
+  PRIVATE ${CMAKE_SOURCE_DIR}/src ${CUDAToolkit_INCLUDE_DIRS}
+)
 target_link_libraries(gemm            PRIVATE gemm_core gemm_backend_cute CUDA::cudart CUDA::nvtx3)
 
 # Optional: make explicit (default is ${CMAKE_BINARY_DIR})
