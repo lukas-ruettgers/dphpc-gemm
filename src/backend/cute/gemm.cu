@@ -229,46 +229,55 @@ gemm_device(ProblemShape shape_MNK, CtaTiler cta_tiler,
 }
 
 
-//------------------------------------------------------------------------------
-// Helpers: map PlanCuTe tags -> CuTe layouts
-//------------------------------------------------------------------------------
-template<bool Right> static inline auto make_smem_layout_A(::cute::Int bM, ::cute::Int bK) {
+// ---- Shared memory layouts (C++17-friendly param types) ----
+template<bool Right, class BMInt, class BKInt>
+static inline auto make_smem_layout_A(BMInt bM, BKInt bK) {
   if constexpr (Right)
     return ::cute::make_layout(::cute::make_shape(bM, bK), ::cute::LayoutRight{});
   else
     return ::cute::make_layout(::cute::make_shape(bM, bK));
 }
-template<bool Right> static inline auto make_smem_layout_B(::cute::Int bN, ::cute::Int bK) {
+
+template<bool Right, class BNInt, class BKInt>
+static inline auto make_smem_layout_B(BNInt bN, BKInt bK) {
   if constexpr (Right)
     return ::cute::make_layout(::cute::make_shape(bN, bK), ::cute::LayoutRight{});
   else
     return ::cute::make_layout(::cute::make_shape(bN, bK));
 }
-template<bool Right> static inline auto make_smem_layout_C(::cute::Int bM, ::cute::Int bN) {
+
+template<bool Right, class BMInt, class BNInt>
+static inline auto make_smem_layout_C(BMInt bM, BNInt bN) {
   if constexpr (Right)
     return ::cute::make_layout(::cute::make_shape(bM, bN), ::cute::LayoutRight{});
   else
     return ::cute::make_layout(::cute::make_shape(bM, bN));
 }
 
-template<bool Right> static inline auto make_thread_layout_A() {
+template<bool Right>
+static inline auto make_thread_layout_A() {
   if constexpr (Right)
     return ::cute::make_layout(::cute::make_shape(::cute::Int<32>{}, ::cute::Int<8>{}), ::cute::LayoutRight{});
   else
     return ::cute::make_layout(::cute::make_shape(::cute::Int<32>{}, ::cute::Int<8>{}));
 }
-template<bool Right> static inline auto make_thread_layout_B() {
+
+template<bool Right>
+static inline auto make_thread_layout_B() {
   if constexpr (Right)
     return ::cute::make_layout(::cute::make_shape(::cute::Int<32>{}, ::cute::Int<8>{}), ::cute::LayoutRight{});
   else
     return ::cute::make_layout(::cute::make_shape(::cute::Int<32>{}, ::cute::Int<8>{}));
 }
-template<bool Right> static inline auto make_thread_layout_C() {
+
+template<bool Right>
+static inline auto make_thread_layout_C() {
   if constexpr (Right)
     return ::cute::make_layout(::cute::make_shape(::cute::Int<16>{}, ::cute::Int<16>{}), ::cute::LayoutRight{});
   else
     return ::cute::make_layout(::cute::make_shape(::cute::Int<16>{}, ::cute::Int<16>{}));
 }
+
 
 //------------------------------------------------------------------------------
 // Templated tile-specialized launcher
