@@ -70,9 +70,6 @@ static void query_core(cudaDeviceProp& props, DeviceInfo& d) {
     if (cudaDeviceGetAttribute(&attr, cudaDevAttrMaxRegistersPerBlock, d.device_id) == cudaSuccess) {
         d.regs_per_block = attr; // prefer attribute when available
     }
-    if (cudaDeviceGetAttribute(&attr, cudaDevAttrMaxRegistersPerThread, d.device_id) == cudaSuccess) {
-        d.regs_per_thread = attr;
-    }
     if (cudaDeviceGetAttribute(&attr, cudaDevAttrMaxBlocksPerMultiprocessor, d.device_id) == cudaSuccess) {
         d.max_blocks_per_sm = attr;
     }
