@@ -1,7 +1,5 @@
 # PO2 GEMM Test
 
-This folder contains a simple GEMM test using CUTLASS.
-
 ## Build Instructions
 
 ```bash
