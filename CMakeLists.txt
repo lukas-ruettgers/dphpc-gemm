@@ -26,6 +26,10 @@ target_link_libraries(cutlass_gemm PRIVATE utils)
 add_executable(wmma_gemm src/wmma_gemm.cu)
 target_link_libraries(wmma_gemm PRIVATE utils)
 
+# CUTLASS tunable benchmark
+add_executable(cutlass_gemm_tunable src/cutlass_gemm_tunable2.cu)
+target_link_libraries(cutlass_gemm_tunable PRIVATE utils)
+
 # Optional main driver (no need to link utils)
 add_executable(main src/main.cpp)
 target_include_directories(main PRIVATE ${CMAKE_SOURCE_DIR}/include)
