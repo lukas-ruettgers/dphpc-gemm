@@ -1,0 +1,16 @@
+-- Configuring done (0.0s)
+-- Generating done (0.3s)
+-- Build files have been written to: /home/shgoel/dphpc/cutlass/benchmark_gemm/build
+[ 10%] Building CXX object CMakeFiles/main.dir/src/main.cpp.o
+[ 20%] Building CUDA object CMakeFiles/wmma_opti_gemm.dir/src/cudaTensorCoreGemm.cu.o
+[ 30%] Building CUDA object CMakeFiles/cutlass_gemm_tunable.dir/src/cutlass_gemm_tunable2.cu.o
+[ 50%] Building CUDA object CMakeFiles/cutlass_gemm.dir/src/cutlass_gemm.cu.o
+[ 50%] Building CUDA object CMakeFiles/wmma_gemm.dir/src/wmma_gemm.cu.o
+[ 60%] Linking CXX executable main
+[ 60%] Built target main
+[ 70%] Linking CUDA executable wmma_gemm
+[ 70%] Built target wmma_gemm
+[ 80%] Linking CUDA executable cutlass_gemm
+[ 80%] Built target cutlass_gemm
+[ 90%] Linking CUDA executable cutlass_gemm_tunable
+[ 90%] Built target cutlass_gemm_tunable
