@@ -4,14 +4,19 @@
 #SBATCH --account=dphpc
 #SBATCH --output=ncu.log
 
-# Visual friendly
-# ncu --import ncu_analysis.ncu-rep --print-details all --section SpeedOfLight_RooflineChart > ncu_analysis
+# Generate ncu data
+# ncu --set full -o ncu_analysis --force-overwrite <binary>
 
-# CSV parsing friendly
-# ncu --import ncu_analysis.ncu-rep --csv --print-details all --section SpeedOfLight_RooflineChart > ncu_analysis
+# Get info
+# ncu --import ncu_analysis.ncu-rep --print-details all > ncu_analysis
+
+# CSV: --csv
+# Roofline, throughput: --section SpeedOfLight_RooflineChart
+# Runtime: --section SpeedOfLight
+# Skip warmup profiling: --launch-skip <number of warmup runs>
 
 ncu \
-  --set full \
+  --set detailed \
   -o ncu_analysis \
   --force-overwrite \
   ./cutlass_gemm_tunable2
