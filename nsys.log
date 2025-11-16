@@ -1,0 +1,49 @@
+WARNING: CPU IP/backtrace sampling not supported, disabling.
+Try the 'nsys status --environment' command to learn more.
+
+WARNING: CPU context switch tracing not supported, disabling.
+Try the 'nsys status --environment' command to learn more.
+
+Kernel: TB=128x256x32 WP=64x64x32 INST=8x8x4 CUTLASS: M=4096 N=4096 K=32  Time=0.459878 ms  Perf=2.33484 TFLOPs
+Collecting data...
+Generating '/tmp/nsys-report-933f.qdstrm'
+[1/7] [0%                          ] nsys.log.nsys-rep[1/7] [0%                          ] nsys.log.nsys-rep[1/7] [8%                          ] nsys.log.nsys-rep[1/7] [===========52%              ] nsys.log.nsys-rep[1/7] [=======================96%  ] nsys.log.nsys-rep[1/7] [========================97% ] nsys.log.nsys-rep[1/7] [========================100%] nsys.log.nsys-rep[1/7] [========================100%] nsys.log.nsys-rep
+[2/7] [0%                          ] nsys.log.sqlite[2/7] [1%                          ] nsys.log.sqlite[2/7] [2%                          ] nsys.log.sqlite[2/7] [3%                          ] nsys.log.sqlite[2/7] [4%                          ] nsys.log.sqlite[2/7] [5%                          ] nsys.log.sqlite[2/7] [6%                          ] nsys.log.sqlite[2/7] [7%                          ] nsys.log.sqlite[2/7] [8%                          ] nsys.log.sqlite[2/7] [9%                          ] nsys.log.sqlite[2/7] [10%                         ] nsys.log.sqlite[2/7] [11%                         ] nsys.log.sqlite[2/7] [12%                         ] nsys.log.sqlite[2/7] [13%                         ] nsys.log.sqlite[2/7] [14%                         ] nsys.log.sqlite[2/7] [=15%                        ] nsys.log.sqlite[2/7] [=16%                        ] nsys.log.sqlite[2/7] [=17%                        ] nsys.log.sqlite[2/7] [==18%                       ] nsys.log.sqlite[2/7] [==19%                       ] nsys.log.sqlite[2/7] [==20%                       ] nsys.log.sqlite[2/7] [==21%                       ] nsys.log.sqlite[2/7] [===22%                      ] nsys.log.sqlite[2/7] [===23%                      ] nsys.log.sqlite[2/7] [===24%                      ] nsys.log.sqlite[2/7] [====25%                     ] nsys.log.sqlite[2/7] [====26%                     ] nsys.log.sqlite[2/7] [====27%                     ] nsys.log.sqlite[2/7] [====28%                     ] nsys.log.sqlite[2/7] [=====29%                    ] nsys.log.sqlite[2/7] [=====30%                    ] nsys.log.sqlite[2/7] [=====31%                    ] nsys.log.sqlite[2/7] [=====32%                    ] nsys.log.sqlite[2/7] [======33%                   ] nsys.log.sqlite[2/7] [======34%                   ] nsys.log.sqlite[2/7] [======35%                   ] nsys.log.sqlite[2/7] [=======36%                  ] nsys.log.sqlite[2/7] [=======37%                  ] nsys.log.sqlite[2/7] [=======38%                  ] nsys.log.sqlite[2/7] [=======39%                  ] nsys.log.sqlite[2/7] [========40%                 ] nsys.log.sqlite[2/7] [========41%                 ] nsys.log.sqlite[2/7] [========42%                 ] nsys.log.sqlite[2/7] [=========43%                ] nsys.log.sqlite[2/7] [=========44%                ] nsys.log.sqlite[2/7] [=========45%                ] nsys.log.sqlite[2/7] [=========46%                ] nsys.log.sqlite[2/7] [==========47%               ] nsys.log.sqlite[2/7] [==========48%               ] nsys.log.sqlite[2/7] [==========49%               ] nsys.log.sqlite[2/7] [===========50%              ] nsys.log.sqlite[2/7] [===========51%              ] nsys.log.sqlite[2/7] [===========52%              ] nsys.log.sqlite[2/7] [===========53%              ] nsys.log.sqlite[2/7] [============54%             ] nsys.log.sqlite[2/7] [============55%             ] nsys.log.sqlite[2/7] [============56%             ] nsys.log.sqlite[2/7] [============57%             ] nsys.log.sqlite[2/7] [=============58%            ] nsys.log.sqlite[2/7] [=============59%            ] nsys.log.sqlite[2/7] [=============60%            ] nsys.log.sqlite[2/7] [==============61%           ] nsys.log.sqlite[2/7] [==============62%           ] nsys.log.sqlite[2/7] [==============63%           ] nsys.log.sqlite[2/7] [==============64%           ] nsys.log.sqlite[2/7] [===============65%          ] nsys.log.sqlite[2/7] [===============66%          ] nsys.log.sqlite[2/7] [===============67%          ] nsys.log.sqlite[2/7] [================68%         ] nsys.log.sqlite[2/7] [================69%         ] nsys.log.sqlite[2/7] [================70%         ] nsys.log.sqlite[2/7] [================71%         ] nsys.log.sqlite[2/7] [=================72%        ] nsys.log.sqlite[2/7] [=================73%        ] nsys.log.sqlite[2/7] [=================74%        ] nsys.log.sqlite[2/7] [==================75%       ] nsys.log.sqlite[2/7] [==================76%       ] nsys.log.sqlite[2/7] [==================77%       ] nsys.log.sqlite[2/7] [==================78%       ] nsys.log.sqlite[2/7] [===================79%      ] nsys.log.sqlite[2/7] [===================80%      ] nsys.log.sqlite[2/7] [===================81%      ] nsys.log.sqlite[2/7] [===================82%      ] nsys.log.sqlite[2/7] [====================83%     ] nsys.log.sqlite[2/7] [====================84%     ] nsys.log.sqlite[2/7] [====================85%     ] nsys.log.sqlite[2/7] [=====================86%    ] nsys.log.sqlite[2/7] [=====================87%    ] nsys.log.sqlite[2/7] [=====================88%    ] nsys.log.sqlite[2/7] [=====================89%    ] nsys.log.sqlite[2/7] [======================90%   ] nsys.log.sqlite[2/7] [======================91%   ] nsys.log.sqlite[2/7] [======================92%   ] nsys.log.sqlite[2/7] [=======================93%  ] nsys.log.sqlite[2/7] [=======================94%  ] nsys.log.sqlite[2/7] [=======================95%  ] nsys.log.sqlite[2/7] [=======================96%  ] nsys.log.sqlite[2/7] [========================97% ] nsys.log.sqlite[2/7] [========================98% ] nsys.log.sqlite[2/7] [========================99% ] nsys.log.sqlite[2/7] [========================100%] nsys.log.sqlite[2/7] [========================100%] nsys.log.sqlite
+SKIPPED: /home/nwadekar/dphpc/dphpc-gemm/nsys.log.sqlite does not contain NV Tools Extension (NVTX) data.
+[3/7] Executing 'nvtx_sum' stats report
+[4/7] Executing 'cuda_api_sum' stats report
+
+ Time (%)  Total Time (ns)  Num Calls   Avg (ns)   Med (ns)   Min (ns)  Max (ns)   StdDev (ns)           Name         
+ --------  ---------------  ---------  ----------  ---------  --------  ---------  -----------  ----------------------
+     91.5        179193954          3  59731318.0   124419.0      3953  179065582  103346521.7  cudaMalloc            
+      5.3         10457147          3   3485715.7    73578.0     70407   10313162    5912742.2  cudaMemcpy            
+      3.0          5822002          1   5822002.0  5822002.0   5822002    5822002          0.0  cudaEventSynchronize  
+      0.1           266963          3     88987.7   122625.0     18509     125829      61057.3  cudaFree              
+      0.1           138281         13     10637.0     6165.0      5520      59857      14828.1  cudaLaunchKernel      
+      0.0            22887          2     11443.5    11443.5      1024      21863      14735.4  cudaEventCreate       
+      0.0            21428          2     10714.0    10714.0      2450      18978      11687.1  cudaEventRecord       
+      0.0             2031          2      1015.5     1015.5       406       1625        862.0  cudaEventDestroy      
+      0.0             1503          1      1503.0     1503.0      1503       1503          0.0  cuModuleGetLoadingMode
+      0.0             1469         13       113.0       84.0        82        385         83.2  cuKernelGetName       
+
+[5/7] Executing 'cuda_gpu_kern_sum' stats report
+
+ Time (%)  Total Time (ns)  Instances  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)                                                  Name                                                
+ --------  ---------------  ---------  --------  --------  --------  --------  -----------  ----------------------------------------------------------------------------------------------------
+    100.0          5954009         13  458000.7  458397.0    455197    460605       1745.3  void cutlass::Kernel<cutlass::gemm::kernel::Gemm<cutlass::gemm::threadblock::MmaPipelined<cutlass::…
+
+[6/7] Executing 'cuda_gpu_mem_time_sum' stats report
+
+ Time (%)  Total Time (ns)  Count  Avg (ns)   Med (ns)  Min (ns)  Max (ns)  StdDev (ns)           Operation          
+ --------  ---------------  -----  ---------  --------  --------  --------  -----------  ----------------------------
+    100.0         10427581      3  3475860.3   40096.0     40032  10347453    5950973.8  [CUDA memcpy Host-to-Device]
+
+[7/7] Executing 'cuda_gpu_mem_size_sum' stats report
+
+ Total (MB)  Count  Avg (MB)  Med (MB)  Min (MB)  Max (MB)  StdDev (MB)           Operation          
+ ----------  -----  --------  --------  --------  --------  -----------  ----------------------------
+     67.633      3    22.544     0.262     0.262    67.109       38.594  [CUDA memcpy Host-to-Device]
+
+Generated:
+	/home/nwadekar/dphpc/dphpc-gemm/nsys.log.nsys-rep
+	/home/nwadekar/dphpc/dphpc-gemm/nsys.log.sqlite

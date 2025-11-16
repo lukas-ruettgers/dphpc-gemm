@@ -3,8 +3,8 @@
 #SBATCH --time=00:59
 #SBATCH --account=dphpc
 #SBATCH --gpus=5060ti:1
-#SBATCH --output=/home/shgoel/dphpc/cutlass/benchmark_gemm/output/%j.log
-#SBATCH --error=/home/shgoel/dphpc/cutlass/benchmark_gemm/output/%j.err
+#SBATCH --output=log.log
+#SBATCH --error=err.err
 
 . /etc/profile.d/modules.sh
 module purge
@@ -22,13 +22,13 @@ mkdir -p build && cd build
 cmake ..
 make -j
 
-M=(1024 2048 4096 8192)
-N=(1024 2048 4096 8192)
-K=(32 64 128 256)
+M=(1024)
+N=(1024)
+K=(32)
 
-ThreadBlock=("128x256x32" "256x128x32" "128x128x32")
+ThreadBlock=("128x256x32")
 WarpBlock=("64x64x32")
-InstBlock=("8x8x4" "16x8x8")
+InstBlock=("8x8x4")
 
 for m in "${M[@]}"; do
     for n in "${N[@]}"; do

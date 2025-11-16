@@ -7,13 +7,13 @@ set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CUDA_ARCHITECTURES 120)
 
 # Update CUTLASS path as needed
-set(CUTLASS_DIR "/home/shgoel/dphpc/cutlass/cutlass")
+set(CUTLASS_DIR "/home/nwadekar/dphpc/cutlass")
 
 # Include CUTLASS + project headers
 include_directories(${CUTLASS_DIR}/include)
 # include_directories(${CUTLASS_DIR}/tools/util/include)
 include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(/home/shgoel/dphpc/cutlass/cuda-samples/Common)
+include_directories(/home/nwadekar/dphpc/cuda-samples/Common)
 
 # Header-only helper library
 add_library(utils INTERFACE)

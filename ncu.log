@@ -1,0 +1,17 @@
+==PROF== Connected to process 508817 (/home/nwadekar/dphpc/dphpc-gemm/cutlass_gemm_tunable2)
+==PROF== Profiling "Kernel" - 0: 0%....50%....100% - 39 passes
+==PROF== Profiling "Kernel" - 1: 0%....50%....100% - 39 passes
+==PROF== Profiling "Kernel" - 2: 0%....50%....100% - 39 passes
+==PROF== Profiling "Kernel" - 3: 0%....50%....100% - 39 passes
+==PROF== Profiling "Kernel" - 4: 0%....50%....100% - 39 passes
+==PROF== Profiling "Kernel" - 5: 0%....50%....100% - 39 passes
+==PROF== Profiling "Kernel" - 6: 0%....50%....100% - 39 passes
+==PROF== Profiling "Kernel" - 7: 0%....50%....100% - 39 passes
+==PROF== Profiling "Kernel" - 8: 0%....50%....100% - 39 passes
+==PROF== Profiling "Kernel" - 9: 0%....50%....100% - 39 passes
+==PROF== Profiling "Kernel" - 10: 0%....50%....100% - 39 passes
+==PROF== Profiling "Kernel" - 11: 0%....50%....100% - 39 passes
+==PROF== Profiling "Kernel" - 12: 0%....50%....100% - 39 passes
+Kernel: TB=128x256x32 WP=64x64x32 INST=8x8x4 CUTLASS: M=4096 N=4096 K=32  Time=2609.13 ms  Perf=0.000411532 TFLOPs
+==PROF== Disconnected from process 508817
+==PROF== Report: /home/nwadekar/dphpc/dphpc-gemm/ncu_analysis.ncu-rep
