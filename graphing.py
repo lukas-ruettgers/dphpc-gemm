@@ -9,6 +9,12 @@ from io import TextIOWrapper
 import subprocess
 import time
 
+
+DEFAULT_NCU_REP = 'ncu_benchmark_output.ncu-rep' # Must match ncu_benchmark.sbatch.
+DEFAULT_CSV = 'ncu_benchmark_output.csv'
+DEFAULT_ROOFLINE_PLOT = 'roofline_plot.png'
+
+
 def get_metric_value(df: pd.DataFrame, metric_name: str) -> float:
     return float(df[df['Metric Name'] == metric_name]['Metric Value'].values[0])
 
@@ -144,7 +150,7 @@ def plot_roofline(data: Data, title: str) -> None:
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     
     plt.tight_layout()
-    plt.savefig('roofline_plot.png', bbox_inches='tight')
+    plt.savefig(DEFAULT_ROOFLINE_PLOT, bbox_inches='tight')
 
 
 def run_benchmark(cmd: list[str]) -> str:
@@ -164,7 +170,7 @@ def run_benchmark(cmd: list[str]) -> str:
         if 'nwadekar' not in result.stdout:
             break
 
-    ncu_rep_file = 'ncu_benchmark_output.ncu-rep' # Must match ncu.sbatch.
+    ncu_rep_file = DEFAULT_NCU_REP
     print(f'NCU profiling complete. Writing results to {ncu_rep_file}')
     return ncu_rep_file
 
@@ -172,7 +178,7 @@ def run_benchmark(cmd: list[str]) -> str:
 def generate_csv(ncu_rep: str) -> str:
     """Generates CSV file from .ncu-rep file and returns path to CSV file."""
 
-    csv_file = 'ncu_benchmark_output.csv'
+    csv_file = DEFAULT_CSV
     cmd = f'ncu --import {ncu_rep} --csv --print-details all --section SpeedOfLight --section SpeedOfLight_RooflineChart'.split()
     result = subprocess.run(cmd, check=True, capture_output=True, text=True)
     result.check_returncode()
@@ -227,7 +233,7 @@ def main():
     if mode == ScriptMode.NCU_REP:
         assert ncu_rep is not None
         print(f"Generating CSV from NCU report: {ncu_rep}")
-        csv = generate_csv(ncu_rep)
+        csv = generate_csv(ncu_rep) # Proceed to CSV mode after generateing CSV.
 
     assert csv is not None
     print(f"Parsing CSV file: {csv}")
