@@ -1,0 +1,46 @@
+=== Custom Kernel Verification ===
+
+Verifying custom kernel: 10048 x 10048 x 64 (alpha=1.000, beta=0.000)
+
+Max abs error: 1.036e-03
+Max rel error: 5.858e+03
+PASSED: within tolerance
+
+Verifying custom kernel: 10048 x 10048 x 64 (alpha=1.000, beta=1.000)
+
+Max abs error: 1.036e-03
+Max rel error: 2.877e+26
+PASSED: within tolerance
+
+Verifying custom kernel: 10048 x 10048 x 64 (alpha=2.000, beta=0.500)
+
+=== MISMATCH ANALYSIS ===
+Total mismatches: 2721 out of 100962304 (0.003%)
+Zero mismatches: 0 (0.0% of mismatches)
+
+--- NON-ZERO MISMATCHES (first 20) ---
+  [   3,9924]: got=  0.010040  ref=  0.011203  abs=1.163e-03  rel=1.038e-01
+  [   8,1532]: got=  0.020825  ref=  0.022083  abs=1.258e-03  rel=5.698e-02
+  [  12,3583]: got=  0.041069  ref=  0.039540  abs=1.529e-03  rel=3.867e-02
+  [  13,1765]: got= -0.011440  ref= -0.010228  abs=1.212e-03  rel=1.185e-01
+  [  14,1757]: got= -0.041856  ref= -0.040425  abs=1.430e-03  rel=3.538e-02
+  [  17, 143]: got= -0.013133  ref= -0.014455  abs=1.322e-03  rel=9.145e-02
+  [  17,6935]: got= -0.008283  ref= -0.009438  abs=1.156e-03  rel=1.224e-01
+  [  20,9068]: got=  0.006909  ref=  0.005839  abs=1.070e-03  rel=1.833e-01
+  [  21,1907]: got= -0.002483  ref= -0.003559  abs=1.076e-03  rel=3.023e-01
+  [  31, 182]: got= -0.009838  ref= -0.008390  abs=1.448e-03  rel=1.726e-01
+  [  32,6756]: got= -0.004511  ref= -0.005637  abs=1.126e-03  rel=1.998e-01
+  [  34,1322]: got= -0.010269  ref= -0.009076  abs=1.193e-03  rel=1.314e-01
+  [  35,3183]: got= -0.007105  ref= -0.006030  abs=1.075e-03  rel=1.783e-01
+  [  39,3437]: got=  0.007590  ref=  0.006348  abs=1.242e-03  rel=1.957e-01
+  [  41,4337]: got=  0.008611  ref=  0.007140  abs=1.471e-03  rel=2.060e-01
+  [  41,7304]: got=  0.004747  ref=  0.005926  abs=1.180e-03  rel=1.991e-01
+  [  42,4691]: got= -0.022195  ref= -0.023431  abs=1.236e-03  rel=5.275e-02
+  [  52,1948]: got=  0.013837  ref=  0.012569  abs=1.268e-03  rel=1.008e-01
+  [  55,4574]: got=  0.009014  ref=  0.007928  abs=1.086e-03  rel=1.370e-01
+  [  56,5414]: got= -0.001229  ref= -0.002650  abs=1.421e-03  rel=5.361e-01
+  ... and 2701 more non-zero errors
+
+Max abs error: 2.071e-03
+Max rel error: 1.255e+26
+FAILED: 2721 mismatches out of 100962304 (0.003%)

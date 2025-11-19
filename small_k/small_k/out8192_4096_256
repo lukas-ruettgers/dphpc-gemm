@@ -1,0 +1,35 @@
+Testing GEMM 8192 x 4096 x 256
+
+=== CORRECTNESS TEST (FP32 cuBLAS vs Custom FP16) ===
+Correctness check:
+Max abs error      = 4.292e-06
+Max elemwise rel   = 7.522e-02  (stab=7.8e-06)
+Frobenius rel err  = 3.210e-07
+
+Sample values (FP32 ref vs FP16 custom):
+C_ref[0,0]=-0.706902  C[0,0]=-0.706902  Δ=+1.79e-07
+C_ref[0,1]=-0.536768  C[0,1]=-0.536768  Δ=+2.38e-07
+C_ref[0,2]=-1.113087  C[0,2]=-1.113087  Δ=+5.96e-07
+C_ref[0,3]=-2.541972  C[0,3]=-2.541973  Δ=+9.54e-07
+C_ref[1,0]= 2.747984  C[1,0]= 2.747985  Δ=-7.15e-07
+C_ref[1,1]=-0.227384  C[1,1]=-0.227384  Δ=+4.47e-08
+C_ref[1,2]=-1.335881  C[1,2]=-1.335881  Δ=+0.00e+00
+C_ref[1,3]=-2.143405  C[1,3]=-2.143405  Δ=+0.00e+00
+C_ref[2,0]= 0.339117  C[2,0]= 0.339117  Δ=-8.94e-08
+C_ref[2,1]= 1.106275  C[2,1]= 1.106275  Δ=-1.19e-07
+C_ref[2,2]= 1.432942  C[2,2]= 1.432942  Δ=-4.77e-07
+C_ref[2,3]=-0.299925  C[2,3]=-0.299925  Δ=+0.00e+00
+C_ref[3,0]= 2.023126  C[3,0]= 2.023126  Δ=-7.15e-07
+C_ref[3,1]= 1.158747  C[3,1]= 1.158747  Δ=-1.19e-07
+C_ref[3,2]=-0.237473  C[3,2]=-0.237473  Δ=+1.64e-07
+C_ref[3,3]= 0.099460  C[3,3]= 0.099460  Δ=+2.83e-07
+...
+
+=== PERFORMANCE TEST (FP16 cuBLAS vs Custom FP16) ===
+Warming up cuBLAS GemmEx (FP16)...
+cuBLAS GemmEx (FP16 TC): 0.443 ms, 38751.21 GFLOPS
+Custom GEMM (FP16 TC):   0.760 ms, 22595.58 GFLOPS
+Speedup vs cuBLAS:       0.58x
+Efficiency:              58.3% of cuBLAS
+
+Done.
