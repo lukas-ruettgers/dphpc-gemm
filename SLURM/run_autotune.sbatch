@@ -22,5 +22,5 @@ mkdir -p build && cd build
 cmake ..
 make -j
 
-./cutlass_gemm_tunable --M 8192 --N 8192 --K 64 --autotune
+./cutlass_gemm_tunable --M 8192 --N 8192 --K 64 --autotune --iters 100
                             

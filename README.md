@@ -24,3 +24,9 @@ make -j
 ./cutlass_gemm
 ./wmma_gemm
 ```
+
+## Autotuner
+```
+./cutlass_gemm_tunable --M 8192 --N 8192 --K 64 --autotune --iters 100
+```
+(see also SLURM/run_autotune.sbatch)

@@ -362,8 +362,10 @@ int main(int argc, char **argv){
     CUDA_CHECK_MSG(result, "Gemm Kernel Launch: ")
   }
   else{
+    std::cout << " CUTLASS: M=" << args.M << " N=" << args.N << " K=" << args.K <<"\n";
     double max_flops = 0;
     int best_config;
+    std::cout << "Searching for best config..." <<"\n";
     for (int i = 0;i< CFGCOUNT; i++){
       result = run_cutlass_dispatch(
         kConfigs[i],
@@ -381,9 +383,9 @@ int main(int argc, char **argv){
       printConfig(kConfigs[i]);
       std::cout<<" "<<tflops<<" TFLOPs\n";
     }
+    std::cout<<"######## Best Config ############\n";
     printConfig(kConfigs[best_config]);
-    std::cout << " CUTLASS: M=" << args.M << " N=" << args.N << " K=" << args.K
-              << "  Perf=" << max_flops << " TFLOPs\n";
+    std::cout<< "  Perf=" << max_flops << " TFLOPs\n";
   }
 
   free(hA); free(hB); free(hC);

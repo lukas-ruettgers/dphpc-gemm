@@ -1,0 +1,60 @@
+-- The CXX compiler identification is GNU 13.3.0
+-- The CUDA compiler identification is NVIDIA 13.0.48
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /cluster/data/cuda/13.0.0/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+-- Configuring done (2.9s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/shgoel/dphpc/cutlass/benchmark_gemm/build
+[ 10%] Building CUDA object CMakeFiles/cutlass_gemm.dir/src/cutlass_gemm.cu.o
+[ 20%] Building CUDA object CMakeFiles/wmma_opti_gemm.dir/src/cudaTensorCoreGemm.cu.o
+[ 30%] Building CUDA object CMakeFiles/wmma_gemm.dir/src/wmma_gemm.cu.o
+[ 40%] Building CXX object CMakeFiles/main.dir/src/main.cpp.o
+[ 50%] Building CUDA object CMakeFiles/cutlass_gemm_tunable.dir/src/cutlass_gemm_tunable2.cu.o
+[ 60%] Linking CXX executable main
+[ 60%] Built target main
+[ 70%] Linking CUDA executable wmma_opti_gemm
+[ 70%] Built target wmma_opti_gemm
+[ 80%] Linking CUDA executable wmma_gemm
+[ 80%] Built target wmma_gemm
+[ 90%] Linking CUDA executable cutlass_gemm
+[ 90%] Built target cutlass_gemm
+[100%] Linking CUDA executable cutlass_gemm_tunable
+[100%] Built target cutlass_gemm_tunable
+ CUTLASS: M=8192 N=8192 K=64
+Searching for best config...
+Config: TB=128x256x32 WP=64x64x32 INST=8x8x4 Stages=2 2.52417 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x8 Stages=2 13.3683 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=8x8x4 Stages=2 2.57928 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x8 Stages=2 13.3091 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=8x8x4 Stages=2 2.5069 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x8 Stages=2 13.3541 TFLOPs
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=3 2683.55 TFLOPs
+Config: TB=64x256x32 WP=32x64x32 INST=16x8x16 Stages=4 13.5567 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x16 Stages=4 13.445 TFLOPs
+Config: TB=128x64x32 WP=64x32x32 INST=16x8x16 Stages=4 13.1646 TFLOPs
+Config: TB=64x128x32 WP=32x64x32 INST=16x8x16 Stages=4 13.3871 TFLOPs
+Config: TB=128x32x32 WP=64x32x32 INST=16x8x16 Stages=4 12.7062 TFLOPs
+Config: TB=64x32x32 WP=32x32x32 INST=16x8x16 Stages=5 12.7197 TFLOPs
+Config: TB=32x64x32 WP=32x32x32 INST=16x8x16 Stages=5 13.3626 TFLOPs
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=4 2686.5 TFLOPs
+Config: TB=128x64x64 WP=64x32x64 INST=16x8x16 Stages=4 13.3345 TFLOPs
+Config: TB=64x128x64 WP=32x64x64 INST=16x8x16 Stages=4 13.5488 TFLOPs
+Config: TB=256x256x32 WP=64x64x32 INST=16x8x16 Stages=3 1610.77 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x16 Stages=3 13.3914 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x16 Stages=3 13.4791 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=5 13.2455 TFLOPs
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=3 2677.13 TFLOPs
+Config: TB=256x128x64 WP=64x64x64 INST=16x8x16 Stages=3 2677.13 TFLOPs
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=4 2638.19 TFLOPs
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=4 2689.2 TFLOPs
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=3 2608.7 TFLOPs
+######## Best Config ############
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=4  Perf=2689.2 TFLOPs
