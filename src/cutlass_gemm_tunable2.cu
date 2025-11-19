@@ -110,9 +110,20 @@ cudaError_t CutlassMgemmNN(
                         {alpha, beta}); // Scalars used in the Epilogue
 
     Gemm gemm_op;
+
+    cutlass::Status status = gemm_op.can_implement(args);
+    if (status != cutlass::Status::kSuccess)
+        return cudaErrorNotSupported;
     gemm_op.initialize(args);
     // CUDA_CHECK_MSG_RET(gemm_op.initialize(args), "Gemm initialize failed: ")
 
+    status = gemm_op();
+    if (status != cutlass::Status::kSuccess) {
+        std::cerr << "CUTLASS Error: " 
+                  << cutlassGetStatusString(status)
+                  << " at line " << __LINE__ << std::endl;
+        return cudaErrorLaunchFailure;
+    }
 
     t_ms = time_cuda_event([&]() { gemm_op(); }, 3, iters); //handles warmup
 
@@ -153,6 +164,10 @@ void printConfig(GemmConfigEntry cfg){
             << " INST=" << cfg.IM << "x" << cfg.IN << "x" << cfg.IK << " Stages="<<cfg.stages; 
 }
 
+void printSharedStorage(GemmConfigEntry cfg){
+  std::cout<< " Approx Shared Storage required = "<< ((double(cfg.BM)*double(cfg.BK) + double(cfg.BN)*double(cfg.BK))*2*double(cfg.stages))/1024 <<" Kb ";
+}
+
 constexpr GemmConfigEntry kConfigs[] = {
   {128,256,32,64,64,32,8,8,4,2},
   {128,256,32,64,64,32,16,8,8,2},
@@ -160,7 +175,7 @@ constexpr GemmConfigEntry kConfigs[] = {
   {128,128,32,64,64,32,16,8,8,2},
   {256,128,32,64,64,32,8,8,4,2},
   {256,128,32,64,64,32,16,8,8,2},
-  {128, 256, 64, 64, 64, 64, 16, 8, 16, 3},
+  {128, 256, 64, 64, 64, 64, 16, 8, 16, 2},
   {64, 256, 32, 32, 64, 32, 16, 8, 16, 4},
   {128, 128, 32, 64, 64, 32, 16, 8, 16, 4},
   {128, 64, 32, 64, 32, 32, 16, 8, 16, 4},
@@ -210,7 +225,7 @@ constexpr GemmFn kernel_table[] = {
     launch_gemm<128,128,32, 64,64,32, 16,8,8,2>,
     launch_gemm<256,128,32, 64,64,32, 8,8,4,2>,
     launch_gemm<256,128,32, 64,64,32, 16,8,8,2>,
-    launch_gemm<128, 256, 64, 64, 64, 64, 16,8,8, 3>,
+    launch_gemm<128, 256, 64, 64, 64, 64, 16,8,8, 2>,
     launch_gemm<64, 256, 32, 32, 64, 32, 16, 8, 16, 4>,
     launch_gemm<128, 128, 32, 64, 64, 32, 16, 8, 16, 4>,
     launch_gemm<128, 64, 32, 64, 32, 32, 16, 8, 16, 4>,
@@ -375,13 +390,19 @@ int main(int argc, char **argv){
         args.beta,
         args.iters, t_ms
       );
-      double tflops = flops/(t_ms * 1e9);
-      if(tflops>max_flops){
-        max_flops = tflops;
-        best_config = i;
-      }
       printConfig(kConfigs[i]);
-      std::cout<<" "<<tflops<<" TFLOPs\n";
+      printSharedStorage(kConfigs[i]);
+      if (result == cudaSuccess){
+        double tflops = flops/(t_ms * 1e9);
+        if(tflops>max_flops){
+          max_flops = tflops;
+          best_config = i;
+        }
+        std::cout<<" "<<tflops<<" TFLOPs\n";
+      }
+      else{
+        std::cout<<" Error while launching the kernel\n";
+      }
     }
     std::cout<<"######## Best Config ############\n";
     printConfig(kConfigs[best_config]);

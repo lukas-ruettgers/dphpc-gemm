@@ -1,0 +1,60 @@
+-- The CXX compiler identification is GNU 13.3.0
+-- The CUDA compiler identification is NVIDIA 13.0.48
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /cluster/data/cuda/13.0.0/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+-- Configuring done (3.0s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/shgoel/dphpc/cutlass/benchmark_gemm/build
+[ 10%] Building CUDA object CMakeFiles/cutlass_gemm.dir/src/cutlass_gemm.cu.o
+[ 20%] Building CXX object CMakeFiles/main.dir/src/main.cpp.o
+[ 30%] Building CUDA object CMakeFiles/cutlass_gemm_tunable.dir/src/cutlass_gemm_tunable2.cu.o
+[ 40%] Building CUDA object CMakeFiles/wmma_gemm.dir/src/wmma_gemm.cu.o
+[ 50%] Building CUDA object CMakeFiles/wmma_opti_gemm.dir/src/cudaTensorCoreGemm.cu.o
+[ 60%] Linking CXX executable main
+[ 60%] Built target main
+[ 70%] Linking CUDA executable wmma_opti_gemm
+[ 70%] Built target wmma_opti_gemm
+[ 80%] Linking CUDA executable wmma_gemm
+[ 80%] Built target wmma_gemm
+[ 90%] Linking CUDA executable cutlass_gemm
+[ 90%] Built target cutlass_gemm
+[100%] Linking CUDA executable cutlass_gemm_tunable
+[100%] Built target cutlass_gemm_tunable
+ CUTLASS: M=8192 N=8192 K=64
+Searching for best config...
+Config: TB=128x256x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 48 Kb  2.57198 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 48 Kb  13.1735 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 32 Kb  2.62714 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 32 Kb  13.212 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 48 Kb  2.53125 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 48 Kb  13.1896 TFLOPs
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=2 Approx Shared Storage required = 96 Kb  12.8558 TFLOPs
+Config: TB=64x256x32 WP=32x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 80 Kb  13.3871 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 64 Kb  13.3366 TFLOPs
+Config: TB=128x64x32 WP=64x32x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 48 Kb  13.0234 TFLOPs
+Config: TB=64x128x32 WP=32x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 48 Kb  13.0639 TFLOPs
+Config: TB=128x32x32 WP=64x32x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 40 Kb  12.6817 TFLOPs
+Config: TB=64x32x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 30 Kb  12.6767 TFLOPs
+Config: TB=32x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 30 Kb  13.2706 TFLOPs
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 128 Kb  Error while launching the kernel
+Config: TB=128x64x64 WP=64x32x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 96 Kb  13.2032 TFLOPs
+Config: TB=64x128x64 WP=32x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 96 Kb  13.385 TFLOPs
+Config: TB=256x256x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 96 Kb  Error while launching the kernel
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 72 Kb  13.2414 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 72 Kb  13.3175 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 40 Kb  13.1458 TFLOPs
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 192 Kb  Error while launching the kernel
+Config: TB=256x128x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 144 Kb  Error while launching the kernel
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 192 Kb  12.8836 TFLOPs
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 256 Kb  Error while launching the kernel
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 96 Kb  Error while launching the kernel
+######## Best Config ############
+Config: TB=64x256x32 WP=32x64x32 INST=16x8x16 Stages=4  Perf=13.3871 TFLOPs

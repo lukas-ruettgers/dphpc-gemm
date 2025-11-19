@@ -45,10 +45,16 @@ inline double time_cuda_event(std::function<void()> func, int warmup = 2, int re
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
-    for (int i = 0; i < warmup; ++i) func();
+    for (int i = 0; i < warmup; ++i){
+        func();
+        cudaDeviceSynchronize();
+    }
 
     cudaEventRecord(start);
-    for (int i = 0; i < repeat; ++i) func();
+    for (int i = 0; i < repeat; ++i){
+        func();
+        cudaDeviceSynchronize();
+    }
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
 
