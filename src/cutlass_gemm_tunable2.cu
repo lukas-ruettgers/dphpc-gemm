@@ -18,6 +18,7 @@
 
 #include <cuda_runtime.h>
 
+
 static void checkCuda(cudaError_t res, const char* msg = "") {
   if (res != cudaSuccess) {
     std::cerr << "CUDA Error: " << msg << " : " << cudaGetErrorString(res) << std::endl;
@@ -56,7 +57,8 @@ void fill_random(T* ptr, size_t n) {
 template <
   int TB_M, int TB_N, int TB_K,
   int WP_M, int WP_N, int WP_K,
-  int INST_M, int INST_N, int INST_K
+  int INST_M, int INST_N, int INST_K,
+  int STAGES
 >
 cudaError_t CutlassMgemmNN(
   int M,
@@ -70,7 +72,8 @@ cudaError_t CutlassMgemmNN(
   float beta,
   float *C,
   int ldc,
-  int iters){
+  int iters,
+  double &t_ms){
     using ElementA = cutlass::half_t;
     using ElementB = cutlass::half_t;
     using ElementC = float;
@@ -96,7 +99,7 @@ cudaError_t CutlassMgemmNN(
             ElementAccumulator,
             ElementAccumulator
         >,
-        cutlass::gemm::threadblock::GemmIdentityThreadblockSwizzle<>, 2>; // default swizzle
+        cutlass::gemm::threadblock::GemmIdentityThreadblockSwizzle<>, STAGES>; // default swizzle
 
 
     typename Gemm::Arguments args({M , N, K},  // Gemm Problem dimensions
@@ -111,104 +114,147 @@ cudaError_t CutlassMgemmNN(
     // CUDA_CHECK_MSG_RET(gemm_op.initialize(args), "Gemm initialize failed: ")
 
 
-    double t_ms = time_cuda_event([&]() { gemm_op(); }, 3, iters); //handles warmup
-    double tflops = 2.0 * M * N * K / (t_ms * 1e9);
-
-    std::cout << "Kernel: TB=" << TB_M << "x" << TB_N << "x" << TB_K
-              << " WP=" << WP_M << "x" << WP_N << "x" << WP_K
-              << " INST=" << INST_M << "x" << INST_N << "x" << INST_K
-              << " CUTLASS: M=" << M << " N=" << N << " K=" << K
-              << "  Time=" << t_ms << " ms  Perf=" << tflops << " TFLOPs\n";
+    t_ms = time_cuda_event([&]() { gemm_op(); }, 3, iters); //handles warmup
 
     return cudaSuccess;
+}
+
+template<int BM, int BN, int BK, int WM, int WN, int WK, int IM, int IN, int IK, int STAGES>
+cudaError_t launch_gemm(
+    int M, int N, int K,
+    float alpha,
+    const cutlass::half_t *A, int lda,
+    const cutlass::half_t *B, int ldb,
+    float beta,
+    float *C, int ldc,
+    int iters, double &t_ms)
+{
+    return CutlassMgemmNN<BM, BN, BK, WM, WN, WK, IM, IN, IK, STAGES>(
+        M, N, K, alpha, A, lda, B, ldb, beta, C, ldc, iters, t_ms
+    );
 }
 
 // -----------------------------------------------------------------------------
 // Dispatch table: map runtime tile choice -> precompiled template call
 // -----------------------------------------------------------------------------
+#define CFGCOUNT 26  //update this when you add a new config
+
+struct GemmConfigEntry
+{
+  int BM, BN, BK;
+  int WM, WN, WK;
+  int IM, IN, IK;
+  int stages = 2;
+};
+
+void printConfig(GemmConfigEntry cfg){
+  std::cout << "Config: TB=" << cfg.BM << "x" << cfg.BN << "x" << cfg.BK
+            << " WP=" << cfg.WM << "x" << cfg.WN << "x" << cfg.WK
+            << " INST=" << cfg.IM << "x" << cfg.IN << "x" << cfg.IK << " Stages="<<cfg.stages; 
+}
+
+constexpr GemmConfigEntry kConfigs[] = {
+  {128,256,32,64,64,32,8,8,4,2},
+  {128,256,32,64,64,32,16,8,8,2},
+  {128,128,32,64,64,32,8,8,4,2},
+  {128,128,32,64,64,32,16,8,8,2},
+  {256,128,32,64,64,32,8,8,4,2},
+  {256,128,32,64,64,32,16,8,8,2},
+  {128, 256, 64, 64, 64, 64, 16, 8, 16, 3},
+  {64, 256, 32, 32, 64, 32, 16, 8, 16, 4},
+  {128, 128, 32, 64, 64, 32, 16, 8, 16, 4},
+  {128, 64, 32, 64, 32, 32, 16, 8, 16, 4},
+  {64, 128, 32, 32, 64, 32, 16, 8, 16, 4},
+  {128, 32, 32, 64, 32, 32, 16, 8, 16, 4},
+  {64, 32, 32, 32, 32, 32, 16, 8, 16, 5},
+  {32, 64, 32, 32, 32, 32, 16, 8, 16, 5},
+  {128, 128, 64, 64, 64, 64, 16, 8, 16, 4},
+  {128, 64, 64, 64, 32, 64, 16, 8, 16, 4},
+  {64, 128, 64, 32, 64, 64, 16, 8, 16, 4},
+  {256, 256, 32, 64, 64, 32, 16, 8, 16, 3},
+  {256, 128, 32, 64, 64, 32, 16, 8, 16, 3},
+  {128, 256, 32, 64, 64, 32, 16, 8, 16, 3},
+  {64, 64, 32, 32, 32, 32, 16, 8, 16, 5},
+  {256, 256, 64, 64, 64, 64, 16, 8, 16, 3},
+  {256, 128, 64, 64, 64, 64, 16, 8, 16, 3},
+  {128, 256, 64, 64, 64, 64, 16, 8, 16, 4},
+  {256, 256, 64, 64, 64, 64, 16, 8, 16, 4},
+  {128, 128, 64, 64, 64, 64, 16, 8, 16, 3},
+};
+
+int get_config_idx(GemmConfigEntry Gemmcfg){
+  for(int i = 0;i<CFGCOUNT;i++){
+    if(kConfigs[i].BM == Gemmcfg.BM && kConfigs[i].BN == Gemmcfg.BN && kConfigs[i].BK == Gemmcfg.BK &&
+       kConfigs[i].WM == Gemmcfg.WM && kConfigs[i].WN == Gemmcfg.WN && kConfigs[i].WK == Gemmcfg.WK &&
+       kConfigs[i].IM == Gemmcfg.IM && kConfigs[i].IN == Gemmcfg.IN && kConfigs[i].IK == Gemmcfg.IK){
+        return i;
+       }
+  }
+  return -1;
+}
+
+using GemmFn = cudaError_t (*)(
+    int M, int N, int K,
+    float alpha,
+    const cutlass::half_t *A, int lda,
+    const cutlass::half_t *B, int ldb,
+    float beta,
+    float *C, int ldc,
+    int iters, double &t_ms
+);
+
+constexpr GemmFn kernel_table[] = {
+    launch_gemm<128,256,32, 64,64,32, 8,8,4,2>,
+    launch_gemm<128,256,32, 64,64,32, 16,8,8,2>,
+    launch_gemm<128,128,32, 64,64,32, 8,8,4,2>,
+    launch_gemm<128,128,32, 64,64,32, 16,8,8,2>,
+    launch_gemm<256,128,32, 64,64,32, 8,8,4,2>,
+    launch_gemm<256,128,32, 64,64,32, 16,8,8,2>,
+    launch_gemm<128, 256, 64, 64, 64, 64, 16,8,8, 3>,
+    launch_gemm<64, 256, 32, 32, 64, 32, 16, 8, 16, 4>,
+    launch_gemm<128, 128, 32, 64, 64, 32, 16, 8, 16, 4>,
+    launch_gemm<128, 64, 32, 64, 32, 32, 16, 8, 16, 4>,
+    launch_gemm<64, 128, 32, 32, 64, 32, 16, 8, 16, 4>,
+    launch_gemm<128, 32, 32, 64, 32, 32, 16, 8, 16, 4>,
+    launch_gemm<64, 32, 32, 32, 32, 32, 16, 8, 16, 5>,
+    launch_gemm<32, 64, 32, 32, 32, 32, 16, 8, 16, 5>,
+    launch_gemm<128, 128, 64, 64, 64, 64, 16, 8, 16, 4>,
+    launch_gemm<128, 64, 64, 64, 32, 64, 16, 8, 16, 4>,
+    launch_gemm<64, 128, 64, 32, 64, 64, 16, 8, 16, 4>,
+    launch_gemm<256, 256, 32, 64, 64, 32, 16, 8, 16, 3>,
+    launch_gemm<256, 128, 32, 64, 64, 32, 16, 8, 16, 3>,
+    launch_gemm<128, 256, 32, 64, 64, 32, 16, 8, 16, 3>,
+    launch_gemm<64, 64, 32, 32, 32, 32, 16, 8, 16, 5>,
+    launch_gemm<256, 256, 64, 64, 64, 64, 16, 8, 16, 3>,
+    launch_gemm<256, 128, 64, 64, 64, 64, 16, 8, 16, 3>,
+    launch_gemm<128, 256, 64, 64, 64, 64, 16, 8, 16, 4>,
+    launch_gemm<256, 256, 64, 64, 64, 64, 16, 8, 16, 4>,
+    launch_gemm<128, 128, 64, 64, 64, 64, 16, 8, 16, 3>,
+};
 
 cudaError_t run_cutlass_dispatch(
-    int tbA, int tbB, int tbC,
-    int wpA, int wpB, int wpC,
-    int instA, int instB, int instC,
+    GemmConfigEntry Gemmcfg,
     int M, int N, int K,
     float alpha,
     cutlass::half_t const *dA, int lda,
     cutlass::half_t const *dB, int ldb,
     float *dC, int ldc,
     float beta,
-    int iters)
+    int iters, double &t_ms)
 {
-  // NOTE: Add or remove cases as you compile more instantiations.
-  // Keep these in the order you want tested (common -> exotic).
-
-  //128x256x32 64x64x32 8x8x4
-  if (tbA == 128 && tbB == 256 && tbC == 32 &&
-      wpA == 64  && wpB == 64  && wpC == 32 &&
-      instA == 8  && instB == 8  && instC == 4
-      ) {
-
-    return CutlassMgemmNN<128,256,32,64,64,32, 8,8,4>(
-        M, N, K, alpha, dA, lda, dB, ldb, beta, dC, ldc, iters);
-  }
-
-  //128x256x32 64x64x32 16x8x8
-  if (tbA == 128 && tbB == 256 && tbC == 32 &&
-      wpA == 64  && wpB == 64  && wpC == 32 &&
-      instA == 16  && instB == 8  && instC == 8
-      ) {
-
-    return CutlassMgemmNN<128,256,32,64,64,32, 16,8,8>(
-        M, N, K, alpha, dA, lda, dB, ldb, beta, dC, ldc, iters);
-  }
-
-  //128x128x32 64x64x32 8x8x4
-  if (tbA == 128 && tbB == 128 && tbC == 32 &&
-      wpA == 64  && wpB == 64  && wpC == 32 &&
-      instA == 8  && instB == 8  && instC == 4
-      ) {
-
-    return CutlassMgemmNN<128,128,32,64,64,32, 8,8,4>(
-        M, N, K, alpha, dA, lda, dB, ldb, beta, dC, ldc, iters);
-  }
-
-  //128x128x32 64x64x32 16x8x8
-  if (tbA == 128 && tbB == 128 && tbC == 32 &&
-      wpA == 64  && wpB == 64  && wpC == 32 &&
-      instA == 16  && instB == 8  && instC == 8
-      ) {
-
-    return CutlassMgemmNN<128,128,32,64,64,32, 16,8,8>(
-        M, N, K, alpha, dA, lda, dB, ldb, beta, dC, ldc, iters);
-  }
-
-  //256x128x32 64x64x32 8x8x4
-  if (tbA == 256 && tbB == 128 && tbC == 32 &&
-      wpA == 64  && wpB == 64  && wpC == 32 &&
-      instA == 8  && instB == 8  && instC == 4
-      ) {
-
-    return CutlassMgemmNN<256,128,32,64,64,32,8,8,4>(
-        M, N, K, alpha, dA, lda, dB, ldb, beta, dC, ldc, iters);
-  }
-
-  //256x128x32 64x64x32 16x8x8
-  if (tbA == 256 && tbB == 128 && tbC == 32 &&
-      wpA == 64  && wpB == 64  && wpC == 32 &&
-      instA == 16  && instB == 8  && instC == 8
-      ) {
-
-    return CutlassMgemmNN<256,128,32,64,64,32, 16,8,8>(
-        M, N, K, alpha, dA, lda, dB, ldb, beta, dC, ldc, iters);
-  }
-
+ 
+  int config_id = get_config_idx(Gemmcfg);
   
-  // // fallback: unsupported
-  std::cerr << "run_cutlass_dispatch: unsupported tile/warp configuration: "
-            << tbA << "x" << tbB << "x" << tbC << " TB, "
-            << wpA << "x" << wpB << "x" << wpC << " WP\n"
-            << instA << "x" << instB << "x" << instC << " WP\n";
-  std::cerr << "Add a matching CutlassMgemmNN<...> instantiation to the binary.\n";
+  if(config_id != -1){
+    return kernel_table[config_id](M, N, K, alpha, dA, lda, dB, ldb, beta, dC, ldc, iters, t_ms);
+  }
+  
+  // fallback: unsupported
+  std::cerr << "run_cutlass_dispatch: unsupported tile/warp configuration";
+  //           << tbA << "x" << tbB << "x" << tbC << " TB, "
+  //           << wpA << "x" << wpB << "x" << wpC << " WP\n"
+  //           << instA << "x" << instB << "x" << instC << " WP\n";
+  // std::cerr << "Add a matching CutlassMgemmNN<...> instantiation to the binary.\n";
   return cudaErrorInvalidValue;
 }
 
@@ -222,6 +268,7 @@ struct Args {
   std::string inst = "8x8x4";
   int iters = 10;
   float alpha = 1.0f, beta = 0.0f;
+  bool autotune = false;
 };
 
 Args parse_args(int argc, char **argv) {
@@ -237,6 +284,7 @@ Args parse_args(int argc, char **argv) {
     else if (a=="--iters") args.iters = atoi(argv[++i]);
     else if (a=="--alpha") args.alpha = atof(argv[++i]);
     else if (a=="--beta") args.beta = atof(argv[++i]);
+    else if (a=="--autotune") args.autotune = true;
     else {
       std::cerr << "Unknown arg: " << a << std::endl;
       std::exit(EXIT_FAILURE);
@@ -260,10 +308,11 @@ int main(int argc, char **argv){
 
   Args args = parse_args(argc, argv);
 
-  int tbA, tbB, tbC, wpA, wpB, wpC, instA, instB, instC;
-  parse_shape(args.threadblock, tbA, tbB, tbC);
-  parse_shape(args.warp, wpA, wpB, wpC);
-  parse_shape(args.inst, instA, instB, instC);
+  GemmConfigEntry Gemmcfg;
+
+  parse_shape(args.threadblock, Gemmcfg.BM, Gemmcfg.BN, Gemmcfg.BK);
+  parse_shape(args.warp, Gemmcfg.WM, Gemmcfg.WN, Gemmcfg.WK);
+  parse_shape(args.inst, Gemmcfg.IM, Gemmcfg.IN, Gemmcfg.IK);
   
   // Compute leading dimensions for each matrix.
   int lda = args.K;
@@ -293,18 +342,49 @@ int main(int argc, char **argv){
   //
   // Launch CUTLASS GEMM.
   //
-
-  // Launch CUTLASS GEMM via dispatch
-  result = run_cutlass_dispatch(
-      tbA, tbB, tbC, wpA, wpB, wpC, instA, instB, instC,
-      args.M, args.N, args.K,
-      args.alpha,
-      dA, lda, dB, ldb, dC, ldc,
-      args.beta,
-      args.iters
-  );
-
-  CUDA_CHECK_MSG(result, "Gemm Kernel Launch: ")
+  double t_ms;
+  double flops = 2.0 * args.M * args.N * args.K; 
+  if(!args.autotune){
+    // Launch CUTLASS GEMM via dispatch
+    result = run_cutlass_dispatch(
+        Gemmcfg,
+        args.M, args.N, args.K,
+        args.alpha,
+        dA, lda, dB, ldb, dC, ldc,
+        args.beta,
+        args.iters, t_ms
+    );
+    double tflops = flops/(t_ms * 1e9);
+    printConfig(Gemmcfg);
+    std::cout << " CUTLASS: M=" << args.M << " N=" << args.N << " K=" << args.K
+              << "  Time=" << t_ms << " ms  Perf=" << tflops << " TFLOPs\n";
+    
+    CUDA_CHECK_MSG(result, "Gemm Kernel Launch: ")
+  }
+  else{
+    double max_flops = 0;
+    int best_config;
+    for (int i = 0;i< CFGCOUNT; i++){
+      result = run_cutlass_dispatch(
+        kConfigs[i],
+        args.M, args.N, args.K,
+        args.alpha,
+        dA, lda, dB, ldb, dC, ldc,
+        args.beta,
+        args.iters, t_ms
+      );
+      double tflops = flops/(t_ms * 1e9);
+      if(tflops>max_flops){
+        max_flops = tflops;
+        best_config = i;
+      }
+      printConfig(kConfigs[i]);
+      std::cout<<" "<<tflops<<" TFLOPs\n";
+    }
+    printConfig(kConfigs[best_config]);
+    std::cout << " CUTLASS: M=" << args.M << " N=" << args.N << " K=" << args.K
+              << "  Perf=" << max_flops << " TFLOPs\n";
+  }
 
   free(hA); free(hB); free(hC);
   cudaFree(dA); cudaFree(dB); cudaFree(dC);

@@ -1,0 +1,23 @@
+Number of CUDA devices: 1
+
+Device 0: NVIDIA GeForce RTX 5060 Ti
+  Compute capability: 12.0
+  Total global memory: 15848 MB
+  Shared memory per block: 49152 bytes
+  Shared memory per SM: 102400 bytes
+  Registers per block: 65536
+  Warp size: 32
+  Max threads per block: 1024
+  Max threads per SM: 1536
+  Number of SMs: 36
+  Max blocks per SM: 24
+  Max grid dimensions: [2147483647, 65535, 65535]
+  Max threads dim (block): [1024, 1024, 64]
+  SM Clock Rate: 2572 MHz
+  Memory Clock Rate: 14001 MHz
+  Memory Bus Width: 128 bits
+  L2 Cache Size: 33554432 bytes
+  Registers per SM: 65536 registers
+  Registers per Block: 65536
+  Warp size: 32
+
