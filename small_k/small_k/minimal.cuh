@@ -16,14 +16,6 @@ namespace gemm_cute_min {
 using namespace cute;
 using cutlass::half_t;
 
-// ============================================================================
-// Row-major stride helper
-// ============================================================================
-CUTE_HOST_DEVICE
-constexpr auto row_major_stride(int ld) {
-  // shape (rows, cols) -> stride (ld, 1)
-  return make_stride(ld, Int<1>{});
-}
 
 #ifndef CHECK_CUDA
 #define CHECK_CUDA(call) \
@@ -38,127 +30,7 @@ constexpr auto row_major_stride(int ld) {
 
 
 
-// ============================================================================
-// ------------------------- SIMT FP32 (reference) -----------------------------
-// ============================================================================
-#ifndef BM
-#define BM 64
-#endif
-#ifndef BN
-#define BN 64
-#endif
-#ifndef BK
-#define BK 64
-#endif
-
-__global__ void gemm_cute_kernel_fp32(
-    const float* __restrict__ A,  // [M,K], row-major, lda=K
-    const float* __restrict__ B,  // [K,N], row-major, ldb=N
-    float* __restrict__ C,        // [M,N], row-major, ldc=N
-    int M, int N, int K,
-    int lda, int ldb, int ldc)
-{
-  Tensor gA = make_tensor(make_gmem_ptr(A), make_shape(M, K), row_major_stride(lda));
-  Tensor gB = make_tensor(make_gmem_ptr(B), make_shape(K, N), row_major_stride(ldb));
-  Tensor gC = make_tensor(make_gmem_ptr(C), make_shape(M, N), row_major_stride(ldc));
-
-  const int tm = threadIdx.y; // 0..BM-1
-  const int tn = threadIdx.x; // 0..BN-1
-
-  const int m0 = blockIdx.y * BM;
-  const int n0 = blockIdx.x * BN;
-
-  const int m = m0 + tm;
-  const int n = n0 + tn;
-
-extern __shared__ __align__(16) unsigned char smem_fp32[];
-float* sA_ptr = reinterpret_cast<float*>(smem_fp32);
-float* sB_ptr = reinterpret_cast<float*>(smem_fp32 + sizeof(float) * (size_t)BM * BK);
-
-  Tensor sA = make_tensor(make_smem_ptr(sA_ptr),
-                          make_shape(Int<BM>{}, Int<BK>{}),
-                          make_stride(Int<BK>{}, Int<1>{}));     // M x K
-  Tensor sB = make_tensor(make_smem_ptr(sB_ptr),
-                          make_shape(Int<BK>{}, Int<BN>{}),
-                          make_stride(Int<BN>{}, Int<1>{}));     // K x N
-
-  float acc = 0.0f;
-
-  for (int k0 = 0; k0 < K; k0 += BK) {
-    if (tn < BK) {
-      if (m < M && (k0 + tn) < K) sA(make_coord(tm, tn)) = gA(make_coord(m, k0 + tn));
-      else                        sA(make_coord(tm, tn)) = 0.0f;
-    }
-    if (tm < BK) {
-      if ((k0 + tm) < K && n < N) sB(make_coord(tm, tn)) = gB(make_coord(k0 + tm, n));
-      else                        sB(make_coord(tm, tn)) = 0.0f;
-    }
-
-    __syncthreads();
-
-    const int Kstep = min(BK, K - k0);
-    #pragma unroll
-    for (int kk = 0; kk < Kstep; ++kk) {
-      acc += sA(make_coord(tm, kk)) * sB(make_coord(kk, tn));
-    }
-
-    __syncthreads();
-  }
-
-  if (m < M && n < N) {
-    gC(make_coord(m, n)) = acc;
-  }
-}
-
-inline void gemm_cute_fp32_launch(
-    const float* dA,
-    const float* dB,
-    float* dC,
-    int M, int N, int K,
-    int lda, int ldb, int ldc,
-    cudaStream_t stream = 0)
-{
-  dim3 block(BN, BM, 1); // 32x32 = 1024 threads
-  dim3 grid((N + BN - 1) / BN,
-            (M + BM - 1) / BM,
-            1);
-
-  size_t smem_bytes = (size_t)BM * BK * sizeof(float)
-                    + (size_t)BK * BN * sizeof(float);
-
-  gemm_cute_kernel_fp32<<<grid, block, smem_bytes, stream>>>(
-      dA, dB, dC, M, N, K, lda, ldb, ldc);
-}
-
-
-// ============================================================================
 // -------------------- Tensor Core FP16xFP16->FP32 (SM80+, TN) ----------------
-// ============================================================================
-
-// fp32 -> fp16 converter
-__global__ void convert_fp32_to_fp16(const float* __restrict__ in,
-                                     half_t* __restrict__ out,
-                                     size_t n)
-{
-  size_t i = blockIdx.x * blockDim.x + threadIdx.x;
-  if (i < n) out[i] = half_t(in[i]);
-}
-
-// fp32 -> fp16 with transpose (K×N → N×K)
-__global__ void convert_and_transpose_fp32_to_fp16(
-    const float* __restrict__ in,   // [K, N] row-major
-    half_t* __restrict__ out,       // [N, K] row-major (transposed)
-    int K, int N)
-{
-  size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx < K * N) {
-    int k = idx / N;
-    int n = idx % N;
-    // Transpose: out[n, k] = in[k, n]
-    out[n * K + k] = half_t(in[k * N + n]);
-  }
-}
-
 
 
 #ifndef BM_TC
@@ -183,7 +55,6 @@ __global__ void gemm_kernel_tc_fp16acc32_TN_cpasync(
     int M, int N, int K,
     int lda, int ldb, int ldc)
 {
-#if __CUDA_ARCH__ >= 800
   const int bx = blockIdx.x;
   const int by = blockIdx.y;
   
@@ -318,17 +189,9 @@ for (int i = 0; i < size(tCrC); ++i) {
   tCgC(i) = tCrC(i);
 }
 
-#endif
 }
 
 // -------------------- Host wrapper: fp16 GEMM (non-padded version) ----------------------
-
-
-
-// ============================================================================
-// Host wrapper (verified working)
-// ============================================================================
-
 
 inline void gemm_cute_tc_fp16_launch(
     const half_t* dA_f16,
