@@ -148,7 +148,7 @@ cudaError_t launch_gemm(
 // -----------------------------------------------------------------------------
 // Dispatch table: map runtime tile choice -> precompiled template call
 // -----------------------------------------------------------------------------
-#define CFGCOUNT 26  //update this when you add a new config
+#define CFGCOUNT 32  //update this when you add a new config
 
 struct GemmConfigEntry
 {
@@ -195,13 +195,21 @@ constexpr GemmConfigEntry kConfigs[] = {
   {128, 256, 64, 64, 64, 64, 16, 8, 16, 4},
   {256, 256, 64, 64, 64, 64, 16, 8, 16, 4},
   {128, 128, 64, 64, 64, 64, 16, 8, 16, 3},
+  {64,64,32, 32,32,32, 16,8,16, 2},
+  {64,64,32, 32,32,32, 16,8,16, 5},
+  {32,32,32, 32,32,32, 16,8,16, 5},
+  {128,128,32,32,32,32,16,8,8,5},
+  {128,128,32,32,32,32,16,8,16,5},
+  {128,128,32,32,32,32,16,8,8,2}
 };
+// --threadblock "128x128x8" --warp "32x32x8" --inst "8x8x4" --stages 5
 
 int get_config_idx(GemmConfigEntry Gemmcfg){
   for(int i = 0;i<CFGCOUNT;i++){
     if(kConfigs[i].BM == Gemmcfg.BM && kConfigs[i].BN == Gemmcfg.BN && kConfigs[i].BK == Gemmcfg.BK &&
        kConfigs[i].WM == Gemmcfg.WM && kConfigs[i].WN == Gemmcfg.WN && kConfigs[i].WK == Gemmcfg.WK &&
-       kConfigs[i].IM == Gemmcfg.IM && kConfigs[i].IN == Gemmcfg.IN && kConfigs[i].IK == Gemmcfg.IK){
+       kConfigs[i].IM == Gemmcfg.IM && kConfigs[i].IN == Gemmcfg.IN && kConfigs[i].IK == Gemmcfg.IK &&
+       kConfigs[i].stages == Gemmcfg.stages){
         return i;
        }
   }
@@ -245,6 +253,12 @@ constexpr GemmFn kernel_table[] = {
     launch_gemm<128, 256, 64, 64, 64, 64, 16, 8, 16, 4>,
     launch_gemm<256, 256, 64, 64, 64, 64, 16, 8, 16, 4>,
     launch_gemm<128, 128, 64, 64, 64, 64, 16, 8, 16, 3>,
+    launch_gemm<64,64,32, 32,32,32, 16,8,16, 2>,
+    launch_gemm<64,64,32, 32,32,32, 16,8,16, 5>,
+    launch_gemm<32,32,32, 32,32,32, 16,8,16, 5>,
+    launch_gemm<128,128,32,32,32,32,16,8,8,5>,
+    launch_gemm<128,128,32,32,32,32,16,8,16,5>,
+    launch_gemm<128,128,32,32,32,32,16,8,8,2>,
 };
 
 cudaError_t run_cutlass_dispatch(
@@ -284,6 +298,7 @@ struct Args {
   int iters = 10;
   float alpha = 1.0f, beta = 0.0f;
   bool autotune = false;
+  int stages = 2;
 };
 
 Args parse_args(int argc, char **argv) {
@@ -299,6 +314,7 @@ Args parse_args(int argc, char **argv) {
     else if (a=="--iters") args.iters = atoi(argv[++i]);
     else if (a=="--alpha") args.alpha = atof(argv[++i]);
     else if (a=="--beta") args.beta = atof(argv[++i]);
+    else if (a=="--stages") args.stages = atof(argv[++i]);
     else if (a=="--autotune") args.autotune = true;
     else {
       std::cerr << "Unknown arg: " << a << std::endl;
@@ -328,7 +344,8 @@ int main(int argc, char **argv){
   parse_shape(args.threadblock, Gemmcfg.BM, Gemmcfg.BN, Gemmcfg.BK);
   parse_shape(args.warp, Gemmcfg.WM, Gemmcfg.WN, Gemmcfg.WK);
   parse_shape(args.inst, Gemmcfg.IM, Gemmcfg.IN, Gemmcfg.IK);
-  
+  Gemmcfg.stages = args.stages;
+
   // Compute leading dimensions for each matrix.
   int lda = args.K;
   int ldb = args.N;
@@ -369,14 +386,20 @@ int main(int argc, char **argv){
         args.beta,
         args.iters, t_ms
     );
-    double tflops = flops/(t_ms * 1e9);
     printConfig(Gemmcfg);
-    std::cout << " CUTLASS: M=" << args.M << " N=" << args.N << " K=" << args.K
-              << "  Time=" << t_ms << " ms  Perf=" << tflops << " TFLOPs\n";
-    
-    CUDA_CHECK_MSG(result, "Gemm Kernel Launch: ")
+    printSharedStorage(Gemmcfg);
+    if (result == cudaSuccess){
+      double tflops = flops/(t_ms * 1e9);
+      std::cout << " CUTLASS: M=" << args.M << " N=" << args.N << " K=" << args.K
+                << "  Time=" << t_ms << " ms  Perf=" << tflops << " TFLOPs\n";
+    }
+    else{
+      std::cout<<" Error while launching the kernel\n";
+    }
+
   }
   else{
+    std::cout << " ######################################################################\n";
     std::cout << " CUTLASS: M=" << args.M << " N=" << args.N << " K=" << args.K <<"\n";
     double max_flops = 0;
     int best_config;
