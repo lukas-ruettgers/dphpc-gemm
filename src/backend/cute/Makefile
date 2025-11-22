@@ -1,4 +1,4 @@
-CUTLASS_DIR=/home/lruettgers/dphpc/dphpc-gemm/external/cutlass/
+CUTLASS_DIR=/home/lruettgers/dphpc/dphpc-gemm/external/cutlass
 NVCC=nvcc
 XFLAGS=-Xptxas=--verbose -Xcompiler=-Wno-psabi -Xcompiler=-fno-strict-aliasing
 DEFINES=-DNDEBUG
@@ -21,6 +21,10 @@ sm90_ref: gemm_sm90_ref.cu
 	${NVCC} ${NVCCFLAGS} ${ARCHSM90} ${DEFINES} ${LDFLAGS} -o $@ $< ${LDLIBS}
 sm80_streamk: gemm_streamk_ref.cu
 	${NVCC} ${NVCCFLAGS} ${ARCHSM80} ${DEFINES} ${LDFLAGS} -o $@ $< ${LDLIBS}
+
+DEFINESMNK=-DDPC_M=32 -DDPC_N=32 -DDPC_K=16
+layouts: layouts.cu
+	${NVCC} ${NVCCFLAGS} ${ARCHSM80} ${DEFINES} ${DEFINESMNK} ${LDFLAGS} -o $@ $< ${LDLIBS}
 
 testing: testing.cu
 	${NVCC} ${NVCCFLAGS} ${ARCHSM90} ${DEFINES} ${LDFLAGS} -o $@ $< ${LDLIBS} -lcublas
