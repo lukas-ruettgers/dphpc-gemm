@@ -102,7 +102,7 @@
 
 #define M_TILES 512
 #define N_TILES 512
-#define K_TILES 8
+#define K_TILES 32
 
 #define M_GLOBAL (M * M_TILES)
 #define N_GLOBAL (N * N_TILES)
@@ -553,8 +553,16 @@ int main(int argc, char **argv)
         printf("Computing... using high performance kernel compute_gemm \n");
 
         checkCudaErrors(cudaFuncSetAttribute(compute_gemm, cudaFuncAttributeMaxDynamicSharedMemorySize, SHMEM_SZ));
-        checkKernelErrors(
+        //Warmup
+        for (int i = 0;i<3;i++){
+            checkKernelErrors(
             (compute_gemm<<<deviceProp.multiProcessorCount, THREADS_PER_BLOCK, SHMEM_SZ>>>(A, B, C, D, alpha, beta)));
+        }
+        //Benchmark
+        for (int i = 0;i<50;i++){
+            checkKernelErrors(
+            (compute_gemm<<<deviceProp.multiProcessorCount, THREADS_PER_BLOCK, SHMEM_SZ>>>(A, B, C, D, alpha, beta)));
+        }
 #if CPU_DEBUG
         checkCudaErrors(cudaMemcpy(result_hD, D, sizeof(float) * M_GLOBAL * N_GLOBAL, cudaMemcpyDeviceToHost));
 #endif
@@ -599,6 +607,8 @@ int main(int argc, char **argv)
     float milliseconds = 0;
 
     checkCudaErrors(cudaEventElapsedTime(&milliseconds, start, stop));
+    
+    milliseconds = milliseconds/50;
 
     printf("Time: %f ms\n", milliseconds);
     printf("TFLOPS: %.2f\n",

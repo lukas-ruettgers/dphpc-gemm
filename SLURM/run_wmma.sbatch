@@ -3,8 +3,8 @@
 #SBATCH --time=00:59
 #SBATCH --account=dphpc
 #SBATCH --gpus=5060ti:1
-#SBATCH --output=/home/shgoel/dphpc/cutlass/benchmark_gemm/output/wmma_%j.log
-#SBATCH --error=/home/shgoel/dphpc/cutlass/benchmark_gemm/output/wmma_%j.err
+#SBATCH --output=/home/shgoel/dphpc/cutlass/benchmark_gemm/output/wmma_512_%j.log
+#SBATCH --error=/home/shgoel/dphpc/cutlass/benchmark_gemm/output/wmma_512_%j.err
 
 . /etc/profile.d/modules.sh
 module purge
@@ -19,6 +19,7 @@ unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH LD_PRELOAD
 export CUDACXX=${CUDA_HOME}/bin/nvcc
 
 mkdir -p build && cd build
+rm -rf *
 cmake ..
 make -j
 

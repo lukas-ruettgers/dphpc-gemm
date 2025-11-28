@@ -19,12 +19,8 @@ unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH LD_PRELOAD
 export CUDACXX=${CUDA_HOME}/bin/nvcc
 
 mkdir -p build && cd build
+rm -rf *
 cmake ..
 make -j
 
-./cutlass_gemm_tunable --M 8192 --N 8192 --K 32 --autotune --iters 50
-./cutlass_gemm_tunable --M 8192 --N 8192 --K 64 --autotune --iters 50
-./cutlass_gemm_tunable --M 8192 --N 8192 --K 128 --autotune --iters 50
-./cutlass_gemm_tunable --M 8192 --N 8192 --K 256 --autotune --iters 50
-./cutlass_gemm_tunable --M 8192 --N 8192 --K 512 --autotune --iters 50
-                            
+./cutlass_gemm_tunable --M 8192 --N 8192 --K 64  --threadblock "128x128x32" --warp "32x32x32" --inst "16x8x8" --stages 2 --iters 100
