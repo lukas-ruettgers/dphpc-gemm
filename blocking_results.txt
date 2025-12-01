@@ -1,0 +1,43 @@
+Non-Blocked GEMM end-to-end example
+M=1024 K=1024 N=1024
+TB_M=32 TB_N=32 TB_K=32
+Launching kernel grid(32,32) block(1024) smem=8192
+Max absolute difference: 2.28882e-05
+Sum absolute difference: 1.94339
+PASS: GPU result matches CPU reference within eps=0.001
+---- Benchmark ----
+Avg time: 1.33556 ms
+Min time: 1.33328 ms
+Max time: 1.33821 ms
+Achieved: 1607.92 GFLOP/s
+
+
+
+Blocked GEMM end-to-end example
+M=1024 K=1024 N=1024
+TB_M=32 TB_N=32 TB_K=32
+Launching kernel grid(32,32) block(1024) smem=8192
+Max absolute difference: 2.28882e-05
+Sum absolute difference: 1.94339
+PASS: GPU result matches CPU reference within eps=0.001
+---- Benchmark ----
+Avg time: 1.22306 ms
+Min time: 1.22038 ms
+Max time: 1.22496 ms
+Achieved: 1755.83 GFLOP/s
+
+
+
+=== CUTE =============
+Blocked GEMM end-to-end example
+M=1024 K=1024 N=1024
+TB_M=32 TB_N=32 TB_K=32
+Launching kernel grid(32,32) block(1024) smem=8192
+Max absolute difference: 2.28882e-05
+Sum absolute difference: 1.94339
+PASS: GPU result matches CPU reference within eps=0.001
+---- Benchmark ----
+Avg time: 1.21267 ms
+Min time: 1.21171 ms
+Max time: 1.21507 ms
+Achieved: 1770.88 GFLOP/s

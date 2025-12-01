@@ -6,7 +6,6 @@
 #include <random>
 #include <iostream>
 
-
 // simple CUDA error-check macro
 inline void cudaCheck(cudaError_t err) {
     if (err != cudaSuccess) {
@@ -16,14 +15,14 @@ inline void cudaCheck(cudaError_t err) {
 }
 
 // Tile sizes (tune as desired)
-constexpr int TB_M = 16;
-constexpr int TB_N = 16;
-constexpr int TB_K = 16;
+constexpr int TB_M = 32;
+constexpr int TB_N = 32;
+constexpr int TB_K = 32;
 
 // Matrix sizes (must be multiples of TB sizes in this simple demo)
-constexpr int M = 128;   // rows of A and C
-constexpr int K = 128;   // cols of A, rows of B
-constexpr int N = 128;   // cols of B and C
+constexpr int M = 1024;   // rows of A and C
+constexpr int K = 1024;   // cols of A, rows of B
+constexpr int N = 1024;   // cols of B and C
 
 // Derived block counts
 constexpr int BM = M / TB_M;
@@ -229,6 +228,55 @@ int main() {
     } else {
         std::cout << "FAIL: difference exceeds eps=" << eps << "\n";
     }
+
+
+    // --------------------------
+    // Timing (CUDA events)
+    // --------------------------
+    // CUDA events for timing
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    // -----------------------------
+    // Warm-up (5 iterations)
+    // -----------------------------
+    for (int i = 0; i < 5; i++) {
+        blocked_gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K);
+    }
+    cudaDeviceSynchronize();
+
+    // -----------------------------
+    // Benchmark (10 runs)
+    // -----------------------------
+    float total_ms = 0.f, min_ms = 1e9, max_ms = 0.f;
+
+    for (int i = 0; i < 10; i++) {
+        cudaEventRecord(start);
+
+        blocked_gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K);
+        
+        cudaEventRecord(stop);
+        cudaEventSynchronize(stop);
+
+        float ms = 0;
+        cudaEventElapsedTime(&ms, start, stop);
+
+        total_ms += ms;
+        min_ms = std::min(min_ms, ms);
+        max_ms = std::max(max_ms, ms);
+    }
+
+    float avg_ms = total_ms / 10.0f;
+
+    std::cout << "---- Benchmark ----\n";
+    std::cout << "Avg time: " << avg_ms << " ms\n";
+    std::cout << "Min time: " << min_ms << " ms\n";
+    std::cout << "Max time: " << max_ms << " ms\n";
+
+    double gflops = (2.0 * M * N * K) / (avg_ms/1000.0) / 1e9;
+    std::cout << "Achieved: " << gflops << " GFLOP/s\n";
+
 
     // Cleanup
     free(hA); free(hB); free(hC); free(hC_ref);
