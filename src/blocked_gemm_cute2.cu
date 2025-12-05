@@ -17,6 +17,10 @@ inline void cudaCheck(cudaError_t err) {
     }
 }
 
+constexpr int W_M = 8;
+constexpr int W_N = 4;
+constexpr int W_K = 4;
+
 // Tile sizes (tune as desired)
 constexpr int TB_M = 32;
 constexpr int TB_N = 32;
@@ -24,22 +28,17 @@ constexpr int TB_K = 32;
 
 // Matrix sizes (must be multiples of TB sizes in this simple demo)
 constexpr int M = 1024;   // rows of A and C
-constexpr int K = 1024;   // cols of A, rows of B
 constexpr int N = 1024;   // cols of B and C
+constexpr int K = 1024;   // cols of A, rows of B
 
-// constexpr int TB_M = 2;
-// constexpr int TB_N = 2;
-// constexpr int TB_K = 2;
-
-// // Matrix sizes (must be multiples of TB sizes in this simple demo)
-// constexpr int M = 4;   // rows of A and C
-// constexpr int K = 4;   // cols of A, rows of B
-// constexpr int N = 4;   // cols of B and C
+constexpr int WpTB_M = TB_M / W_M;
+constexpr int WpTB_N = TB_N / W_N;
+constexpr int WpTB_K = TB_K / W_K;
 
 // Derived block counts
 constexpr int BM = M / TB_M;
-constexpr int BK = K / TB_K;
 constexpr int BN = N / TB_N;
+constexpr int BK = K / TB_K;
 
 template <class Shape, class Stride>
 void print2D(Layout<Shape,Stride> const& layout)
@@ -54,23 +53,44 @@ void print2D(Layout<Shape,Stride> const& layout)
 
 
 // Host blocking helpers (row-major input -> blocked 4D layout)
-void block_A_host(
-    const float* A,      // row-major M x K
-    float* Ablk)         // contiguous blocked: [BM][BK][TB_M][TB_K]
+void block_host_matrix(
+    const float* mat, // [in] row-major A x B
+    float* matblk, // [out] contiguous blocked: [BA][BB][WpTB_A][WpTB_B][W_A][W_B]
+    int A, int B,
+    int BA, int BB,
+    int TB_A, int TB_B,
+    int WpTB_A, int WpTB_B,
+    int W_A, int W_B
+)
 {
-    for (int bm = 0; bm < BM; ++bm) {
-        for (int bk = 0; bk < BK; ++bk) {
+    for (int ba = 0; ba < BA; ++ba) {
+        for (int bb = 0; bb < BB; ++bb) {
             // pointer to destination block
-            size_t block_index = (size_t)bm * BK + bk;
-            float* dst_block = Ablk + block_index * (TB_M * TB_K);
+            size_t block_index = (size_t)ba * BB + bb;
+            float* dst_block = matblk + block_index * (TB_A * TB_B);
+            // printf("Block (row %d, col %d): index %lu\n", ba, bb, block_index);
 
-            for (int i = 0; i < TB_M; ++i) {
-                for (int j = 0; j < TB_K; ++j) {
-                    int global_m = bm * TB_M + i;
-                    int global_k = bk * TB_K + j;
-                    dst_block[i * TB_K + j] = A[global_m * K + global_k];
+            for (int wa = 0; wa < WpTB_A; wa++) {
+                for (int wb = 0; wb < WpTB_B; wb++) {
+                    size_t warp_index = (size_t) wa * WpTB_B + wb;
+                    float *dst_warp = dst_block + warp_index * (W_A * W_B);
+
+                    // printf("  Warp (row %d, col %d): index %lu\n", wa, wb, warp_index);
+
+                    for (int i = 0; i < W_A; ++i) {
+                        for (int j = 0; j < W_B; ++j) {
+                            int global_a = ba * TB_A + wa * W_A + i;
+                            int global_b = bb * TB_B + wb * W_B + j;
+
+                            // printf("    Element (row %d, col %d): global indices (%d, %d)\n", i, j, global_m, global_k);
+
+                            dst_warp[i * W_B + j] = mat[global_a * B + global_b];
+                        }
+                    }
                 }
             }
+
+            
         }
     }
 }
@@ -109,32 +129,49 @@ __global__ void cute_blocked_gemm_kernel(
     const int bm = blockIdx.x; // 0..BM-1
     const int bn = blockIdx.y; // 0..BN-1
 
-    // Thread identification - each thread computes one element in TB_M x TB_N tile
     const int tid = threadIdx.x;
-    const int tm = tid / TB_N; // 0..TB_M-1
-    const int tn = tid % TB_N; // 0..TB_N-1
+    const int warpid = tid / 32;
+    const int warp_tid = tid % 32;
 
-    if (tm >= TB_M || tn >= TB_N) return;
+    // Warp identification - each warp computes one warp block in WpTB_M x WpTB_N tile.
+    const int wm = warpid / WpTB_N;
+    const int wn = warpid % WpTB_N;
+
+    if (wm >= WpTB_M || wn >= WpTB_N) return;
+
+    // Thread identification - each thread computes one element in TB_M x TB_N tile
+    const int tm = warp_tid / W_N; // 0..W_M-1
+    const int tn = warp_tid % W_N; // 0..W_N-1
+
+    if (tm >= W_M || tn >= W_N) return;
 
     // Shared memory allocation
+    // Shared memory for entire TB. But each warp will only use it's own section.
     extern __shared__ float smem[]; // size = TB_M*TB_K + TB_K*TB_N
     float* smem_A = smem;                       // TB_M * TB_K
     float* smem_B = smem + TB_M * TB_K;        // TB_K * TB_N
 
 
     // Create CUTE tensors for shared memory
-    Layout sA_layout = make_layout(make_shape(TB_M, TB_K), make_stride(TB_K, 1));
-    Layout sB_layout = make_layout(make_shape(TB_K, TB_N), make_stride(TB_N, 1));
+    Layout sA_layout = make_layout(
+        make_shape(WpTB_M, WpTB_K, W_M, W_K),
+        make_stride(TB_K * W_M, W_M * W_K, W_K, 1)
+    );
+    Layout sB_layout = make_layout(
+        make_shape(WpTB_K, WpTB_N, W_K, W_N),
+        make_stride(TB_N * W_K, W_K * W_N, W_N, 1)
+    );
+
     Tensor sA = make_tensor(make_smem_ptr(smem_A), sA_layout);
     Tensor sB = make_tensor(make_smem_ptr(smem_B), sB_layout);
 
     auto Ablk_layout = make_layout(
-        make_shape(BM, BK, TB_M, TB_K),
-        make_stride(K*TB_M, TB_M*TB_K, TB_K, 1)
+        make_shape(BM, BK, WpTB_M, WpTB_K, W_M, W_K),
+        make_stride(K * TB_M, TB_M * TB_K, TB_K * W_M, W_M * W_K, W_K, 1)
     );
     auto Bblk_layout = make_layout(
-        make_shape(BK, BN, TB_K, TB_N),
-        make_stride(N*TB_K, TB_K*TB_N, TB_N, 1)
+        make_shape(BK, BN, WpTB_K, WpTB_N, W_K, W_N),
+        make_stride(N * TB_K, TB_K * TB_N, TB_N * W_K, W_K * W_N, W_N, 1)
     );
 
     // C layout: row-major M x N
@@ -149,87 +186,52 @@ __global__ void cute_blocked_gemm_kernel(
     // We'll manually manage the accumulation since each thread computes one element
     float accum = 0.0f;
 
-    // Loop over bk blocks
+    // Loop over bk blocks and wk warps
     for (int bk = 0; bk < BK; ++bk) {
-        // Extract the current blocks using CUTE slicing
-        // Get A block: gAblk[bm, bk, :, :] - a TB_M x TB_K tile
-        auto gA_block = gAblk(bm, bk, _, _);
-        // Get B block: gBblk[bk, bn, :, :] - a TB_K x TB_N tile
-        auto gB_block = gBblk(bk, bn, _, _);
-        
-        // Load A tile
-        for (int idx = tid; idx < TB_M * TB_K; idx += blockDim.x) {
-            int i = idx / TB_K;
-            int j = idx % TB_K;
-            sA(i, j) = gA_block(i, j);
+        for (int wk = 0; wk < WpTB_K; ++wk) {
+            // Extract the current warp using CUTE slicing
+            // Get A block: gAblk[bm, bk, :, :] - a TB_M x TB_K tile
+            auto gA_warp = gAblk(bm, bk, wm, wk, _, _);
+            // Get B block: gBblk[bk, bn, :, :] - a TB_K x TB_N tile
+            auto gB_warp = gBblk(bk, bn, wk, wn, _, _);
+
+            // Slice the shared memory for this warp.
+            auto sA_warp = sA(wm, wk, _, _);
+            auto sB_warp = sB(wk, wn, _, _);
+
+            // Load A tile
+            for (int idx = warp_tid; idx < W_M * W_K; idx += W_M * W_N) {
+                int i = idx / W_K;
+                int j = idx % W_K;
+                sA_warp(i, j) = gA_warp(i, j);
+            }
+
+            // Load B tile  
+            for (int idx = warp_tid; idx < W_K * W_N; idx += W_M * W_N) {
+                int i = idx / W_N;
+                int j = idx % W_N;
+                sB_warp(i, j) = gB_warp(i, j);
+            }
+
+            __syncwarp();
+
+            // Compute partial product using CUTE tensor access
+            // This thread computes: accum += sum_over_kk(sA[tm, kk] * sB[kk, tn])
+            for (int kk = 0; kk < W_K; ++kk) {
+                accum += sA_warp(tm, kk) * sB_warp(kk, tn);
+            }
+
+            __syncwarp();
         }
-
-        // Load B tile  
-        for (int idx = tid; idx < TB_K * TB_N; idx += blockDim.x) {
-            int i = idx / TB_N;
-            int j = idx % TB_N;
-            sB(i, j) = gB_block(i, j);
-        }
-
-        __syncthreads();
-
-        // Compute partial product using CUTE tensor access
-        // This thread computes: accum += sum_over_kk(sA[tm, kk] * sB[kk, tn])
-        for (int kk = 0; kk < TB_K; ++kk) {
-            accum += sA(tm, kk) * sB(kk, tn);
-        }
-
-        __syncthreads();
     }
 
     // Write result using CUTE tensor access
-    int row = bm * TB_M + tm;
-    int col = bn * TB_N + tn;
+    int row = bm * TB_M + wm * W_M + tm;
+    int col = bn * TB_N + wn * W_N + tn;
     if (row < M_ && col < N_) {
         gC(row, col) = accum;
     }
 }
-
-// __global__ void cute_blocked_gemm_kernel(
-//     const float* __restrict__ A,  // row-major M x K
-//     const float* __restrict__ B,  // row-major K x N
-//     float* __restrict__ C,        // row-major M x N
-//     int M_, int N_, int K_)
-// {
-//     using namespace cute;
-
-//     // Create global tensors
-//     Tensor gA = make_tensor(make_gmem_ptr(A), make_shape(M_, K_), make_stride(K_, 1));
-//     Tensor gB = make_tensor(make_gmem_ptr(B), make_shape(K_, N_), make_stride(N_, 1));
-//     Tensor gC = make_tensor(make_gmem_ptr(C), make_shape(M_, N_), make_stride(N_, 1));
-
-//     // Define tiling strategy
-//     auto tiled_mma = make_tiled_mma(
-//         UniversalFMA<float>{},
-//         make_tile(Int<TB_M>{}, Int<TB_N>{}, Int<TB_K>{})  // Tile sizes
-//     );
-
-//     // Get block coordinates
-//     int bm = blockIdx.x, bn = blockIdx.y;
-    
-//     // Extract tiles for this block
-//     auto a_tile = local_tile(gA, make_shape(Int<TB_M>{}, Int<TB_K>{}), 
-//                             make_coord(bm, _), Step<_1, X, _1>{});
-//     auto b_tile = local_tile(gB, make_shape(Int<TB_K>{}, Int<TB_N>{}), 
-//                             make_coord(_, bn), Step<X, _1, _1>{});
-//     auto c_tile = local_tile(gC, make_shape(Int<TB_M>{}, Int<TB_N>{}), 
-//                             make_coord(bm, bn));
-
-//     // Create accumulator
-//     Tensor accum = make_fragment_like(c_tile);
-//     clear(accum);
-
-//     // CUTE will handle tiling and accumulation automatically!
-//     gemm(a_tile, b_tile, accum);
-
-//     // Write result
-//     copy(accum, c_tile);
-// }
 
 // CPU naive gemm for verification: C = A * B
 void cpu_gemm_naive(const float* A, const float* B, float* C) {
@@ -247,7 +249,6 @@ void cpu_gemm_naive(const float* A, const float* B, float* C) {
 void example_and_quit() {
     constexpr int m = 24, k = 8;
     constexpr int tb_m = 12, tb_k = 4;
-    constexpr int warp_m = 4, warp_k = 2;
 
     Layout a = make_layout(make_shape(m, k), make_stride(k, 1)); // Row major
     print2D(a);
@@ -289,30 +290,58 @@ int main() {
     std::cout << "TB_M=" << TB_M << " TB_N=" << TB_N << " TB_K=" << TB_K << "\n";
 
     // float a[M][K] = {
-    //     {1, 2, 3, 4},
-    //     {5, 6, 7, 8},
-    //     {9,10,11,12},
-    //     {13,14,15,16}
+    //     {1, 2, 3, 4, 5, 6, 7, 8},
+    //     {9,10,11,12,13,14,15,16},
+    //     {17,18,19,20,21,22,23,24},
+    //     {25,26,27,28,29,30,31,32},
+    //     {33,34,35,36,37,38,39,40},
+    //     {41,42,43,44,45,46,47,48},
+    //     {49,50,51,52,53,54,55,56},
+    //     {57,58,59,60,61,62,63,64}
     // };
-    // float aa[4][4];
+    // float aa[M][K];
+
+    // for (int i = 0; i < M; i++) {
+    //     for (int j = 0; j < K; j++) {
+    //         printf("%3d  ", (int) a[i][j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
 
     // block_A_host((float*)a, (float*)aa);
     
     // auto l = make_layout(
-    //     make_shape(BM, BK, TB_M, TB_K),
-    //     make_stride(K*TB_M, TB_M*TB_K, TB_K, 1)
+    //     make_shape(BM, BK, WpTB_M, WpTB_K, W_M, W_K),
+    //     make_stride(K * TB_M, TB_M * TB_K, TB_K * W_M, W_M * W_K, W_K, 1)
     // );
     // auto t = make_tensor((float*)aa, l);
+
+    // for (int i = 0; i < M; i++) {
+    //     for (int j = 0; j < K; j++) {
+    //         printf("%3d  ", (int) aa[i][j]);
+    //     }
+    //     printf("\n");
+    // }
 
     // for(int bm = 0; bm < BM; bm++) {
     //     for(int bk = 0; bk < BK; bk++) {
     //         printf("Block A bm=%d bk=%d\n", bm, bk);
-    //         auto blk = t(bm, bk, _, _);
-    //         for(int tm = 0; tm < TB_M; tm++) {
-    //             for(int tk = 0; tk < TB_K; tk++) {
-    //                 printf("%3d  ", (int) blk(tm, tk));
+    //         auto blk = t(bm, bk, _, _, _, _);
+            
+    //         for(int wm = 0; wm < WpTB_M; wm++) {
+    //             for(int wk = 0; wk < WpTB_K; wk++) {
+    //                 printf("Warp A wm=%d wk=%d\n", wm, wk);
+    //                 auto warp = blk(wm, wk, _, _);
+
+    //                 for(int tm = 0; tm < W_M; tm++) {
+    //                     for(int tk = 0; tk < W_K; tk++) {
+    //                         printf("%3d  ", (int) warp(tm, tk));
+    //                     }
+    //                     printf("\n");
+    //                 }
+    //                 printf("\n");
     //             }
-    //             printf("\n");
     //         }
     //         printf("\n");
     //     }
@@ -346,8 +375,8 @@ int main() {
     float* hBblk = (float*)malloc(sizeBblk * sizeof(float));
 
     // Block A and B on host
-    block_A_host(hA, hAblk);
-    block_B_host(hB, hBblk);
+    block_host_matrix(hA, hAblk, M, K, BM, BK, TB_M, TB_K, WpTB_M, WpTB_K, W_M, W_K);
+    block_host_matrix(hB, hBblk, K, N, BK, BN, TB_K, TB_N, WpTB_K, WpTB_N, W_K, W_N);
 
     // Device allocations
     float *dAblk = nullptr, *dBblk = nullptr, *dC = nullptr;
@@ -396,6 +425,8 @@ int main() {
     } else {
         std::cout << "FAIL: difference exceeds eps=" << eps << "\n";
     }
+
+    return 0;
 
 
     // --------------------------

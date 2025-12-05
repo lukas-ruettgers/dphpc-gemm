@@ -7,5 +7,5 @@ nvcc -O3 \
      -I"$CUDA_HOME/include" \
      -I"/home/$USER/dphpc/dphpc-gemm/include" \
      -L"$CUDA_HOME/lib64" -lnvToolsExt \
-     /home/$USER/dphpc/dphpc-gemm/src/blocked_gemm_cute.cu \
-     -o /home/$USER/dphpc/dphpc-gemm/build/blocked_gemm_cute
+     /home/$USER/dphpc/dphpc-gemm/src/blocked_gemm_cute2.cu \
+     -o /home/$USER/dphpc/dphpc-gemm/build/blocked_gemm_cute2
