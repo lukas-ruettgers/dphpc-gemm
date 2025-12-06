@@ -1,3 +1,5 @@
+> ⚠️ **Work ongoing, repository not in finalized version.**
+
 # Repository structure
 ```
 dphpc-gemm/
@@ -5,7 +7,7 @@ dphpc-gemm/
 │  ├─ config.example.sh
 │  └─ (config.sh)                       # user-local, git-ignored
 │
-├─ external/                            # External dependencies (submodules ok)
+├─ external/                            # External dependencies
 │  └─ cutlass/
 │
 ├─ slurm/                               # Slurm job files
@@ -42,5 +44,5 @@ dphpc-gemm/
 ├─ globals.h                            # GLOBAL_SEED and similar project-wide constants
 │
 ├─ Git files                            # includes build/, config/config.sh, etc.
-├─ (CMakeLists.txt)                     # ignored for now per your request
+├─ (CMakeLists.txt)                     
 └─ README.md                            # (recommended: usage, build, run examples)
