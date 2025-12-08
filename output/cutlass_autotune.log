@@ -1,0 +1,195 @@
+-- Configuring done (0.0s)
+-- Generating done (0.3s)
+-- Build files have been written to: /home/shgoel/dphpc/cutlass/benchmark_gemm/build
+[ 20%] Built target main
+[ 40%] Built target wmma_opti_gemm
+[ 60%] Built target cutlass_gemm
+[ 80%] Building CUDA object CMakeFiles/cutlass_gemm_tunable.dir/src/cutlass_gemm_tunable2.cu.o
+[ 90%] Built target wmma_gemm
+[100%] Linking CUDA executable cutlass_gemm_tunable
+[100%] Built target cutlass_gemm_tunable
+ ######################################################################
+ CUTLASS: M=8192 N=8192 K=32
+Searching for best config...
+Config: TB=128x256x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 48 Kb  2.43149 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 48 Kb  6.64924 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 32 Kb  2.52318 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 32 Kb  6.68312 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 48 Kb  2.40426 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 48 Kb  5.94413 TFLOPs
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=2 Approx Shared Storage required = 96 Kb  6.617 TFLOPs
+Config: TB=64x256x32 WP=32x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 80 Kb  6.71074 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 64 Kb  6.67222 TFLOPs
+Config: TB=128x64x32 WP=64x32x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 48 Kb  6.596 TFLOPs
+Config: TB=64x128x32 WP=32x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 48 Kb  6.68233 TFLOPs
+Config: TB=128x32x32 WP=64x32x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 40 Kb  6.36146 TFLOPs
+Config: TB=64x32x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 30 Kb  6.358 TFLOPs
+Config: TB=32x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 30 Kb  6.62736 TFLOPs
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 128 Kb  Error while launching the kernel
+Config: TB=128x64x64 WP=64x32x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 96 Kb  6.62056 TFLOPs
+Config: TB=64x128x64 WP=32x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 96 Kb  6.71091 TFLOPs
+Config: TB=256x256x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 96 Kb  Error while launching the kernel
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 72 Kb  6.66771 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 72 Kb  6.67561 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 40 Kb  6.62381 TFLOPs
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 192 Kb  Error while launching the kernel
+Config: TB=256x128x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 144 Kb  Error while launching the kernel
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 192 Kb  Error while launching the kernel
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 256 Kb  Error while launching the kernel
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 96 Kb  6.69947 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=2 Approx Shared Storage required = 16 Kb  5.49619 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 40 Kb  6.61226 TFLOPs
+Config: TB=32x32x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 20 Kb  6.38248 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x8 Stages=5 Approx Shared Storage required = 80 Kb  6.66642 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 80 Kb  6.67447 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 32 Kb  6.69494 TFLOPs
+######## Best Config ############
+Config: TB=64x128x64 WP=32x64x64 INST=16x8x16 Stages=4  Perf=6.71091 TFLOPs
+ ######################################################################
+ CUTLASS: M=8192 N=8192 K=64
+Searching for best config...
+Config: TB=128x256x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 48 Kb  2.57155 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 48 Kb  13.1684 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 32 Kb  2.61998 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 32 Kb  13.2057 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 48 Kb  2.54102 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 48 Kb  13.1795 TFLOPs
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=2 Approx Shared Storage required = 96 Kb  12.7828 TFLOPs
+Config: TB=64x256x32 WP=32x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 80 Kb  13.3731 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 64 Kb  13.3213 TFLOPs
+Config: TB=128x64x32 WP=64x32x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 48 Kb  13.0021 TFLOPs
+Config: TB=64x128x32 WP=32x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 48 Kb  13.2256 TFLOPs
+Config: TB=128x32x32 WP=64x32x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 40 Kb  12.6634 TFLOPs
+Config: TB=64x32x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 30 Kb  12.6764 TFLOPs
+Config: TB=32x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 30 Kb  13.2071 TFLOPs
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 128 Kb  Error while launching the kernel
+Config: TB=128x64x64 WP=64x32x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 96 Kb  13.1572 TFLOPs
+Config: TB=64x128x64 WP=32x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 96 Kb  13.355 TFLOPs
+Config: TB=256x256x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 96 Kb  Error while launching the kernel
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 72 Kb  13.2211 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 72 Kb  11.2327 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 40 Kb  13.1275 TFLOPs
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 192 Kb  Error while launching the kernel
+Config: TB=256x128x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 144 Kb  Error while launching the kernel
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 192 Kb  Error while launching the kernel
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 256 Kb  Error while launching the kernel
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 96 Kb  13.3336 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=2 Approx Shared Storage required = 16 Kb  12.8546 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 40 Kb  13.1346 TFLOPs
+Config: TB=32x32x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 20 Kb  12.7299 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x8 Stages=5 Approx Shared Storage required = 80 Kb  13.2238 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 80 Kb  13.321 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 32 Kb  13.2541 TFLOPs
+######## Best Config ############
+Config: TB=64x256x32 WP=32x64x32 INST=16x8x16 Stages=4  Perf=13.3731 TFLOPs
+ ######################################################################
+ CUTLASS: M=8192 N=8192 K=128
+Searching for best config...
+Config: TB=128x256x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 48 Kb  2.63213 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 48 Kb  18.8562 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 32 Kb  2.68816 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 32 Kb  23.6423 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 48 Kb  2.55851 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 48 Kb  18.7496 TFLOPs
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=2 Approx Shared Storage required = 96 Kb  18.8154 TFLOPs
+Config: TB=64x256x32 WP=32x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 80 Kb  26.3044 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 64 Kb  25.7313 TFLOPs
+Config: TB=128x64x32 WP=64x32x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 48 Kb  24.5077 TFLOPs
+Config: TB=64x128x32 WP=32x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 48 Kb  25.8623 TFLOPs
+Config: TB=128x32x32 WP=64x32x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 40 Kb  24.0865 TFLOPs
+Config: TB=64x32x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 30 Kb  24.6258 TFLOPs
+Config: TB=32x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 30 Kb  25.7195 TFLOPs
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 128 Kb  Error while launching the kernel
+Config: TB=128x64x64 WP=64x32x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 96 Kb  24.5796 TFLOPs
+Config: TB=64x128x64 WP=32x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 96 Kb  24.4308 TFLOPs
+Config: TB=256x256x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 96 Kb  Error while launching the kernel
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 72 Kb  25.7635 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 72 Kb  24.8573 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 40 Kb  25.8265 TFLOPs
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 192 Kb  Error while launching the kernel
+Config: TB=256x128x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 144 Kb  Error while launching the kernel
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 192 Kb  Error while launching the kernel
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 256 Kb  Error while launching the kernel
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 96 Kb  26.0481 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=2 Approx Shared Storage required = 16 Kb  23.8154 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 40 Kb  25.9304 TFLOPs
+Config: TB=32x32x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 20 Kb  21.5455 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x8 Stages=5 Approx Shared Storage required = 80 Kb  17.3591 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 80 Kb  25.9165 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 32 Kb  18.9318 TFLOPs
+######## Best Config ############
+Config: TB=64x256x32 WP=32x64x32 INST=16x8x16 Stages=4  Perf=26.3044 TFLOPs
+ ######################################################################
+ CUTLASS: M=8192 N=8192 K=256
+Searching for best config...
+Config: TB=128x256x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 48 Kb  2.65604 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 48 Kb  21.7462 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 32 Kb  2.72317 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 32 Kb  24.6773 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 48 Kb  2.62564 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 48 Kb  21.6581 TFLOPs
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=2 Approx Shared Storage required = 96 Kb  21.651 TFLOPs
+Config: TB=64x256x32 WP=32x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 80 Kb  35.6064 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 64 Kb  37.3245 TFLOPs
+Config: TB=128x64x32 WP=64x32x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 48 Kb  45.2723 TFLOPs
+Config: TB=64x128x32 WP=32x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 48 Kb  43.716 TFLOPs
+Config: TB=128x32x32 WP=64x32x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 40 Kb  33.4275 TFLOPs
+Config: TB=64x32x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 30 Kb  35.4518 TFLOPs
+Config: TB=32x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 30 Kb  35.6053 TFLOPs
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 128 Kb  Error while launching the kernel
+Config: TB=128x64x64 WP=64x32x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 96 Kb  31.4272 TFLOPs
+Config: TB=64x128x64 WP=32x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 96 Kb  31.5004 TFLOPs
+Config: TB=256x256x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 96 Kb  Error while launching the kernel
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 72 Kb  37.6671 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 72 Kb  37.5023 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 40 Kb  41.5301 TFLOPs
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 192 Kb  Error while launching the kernel
+Config: TB=256x128x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 144 Kb  Error while launching the kernel
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 192 Kb  Error while launching the kernel
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 256 Kb  Error while launching the kernel
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 96 Kb  37.017 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=2 Approx Shared Storage required = 16 Kb  40.2935 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 40 Kb  40.4871 TFLOPs
+Config: TB=32x32x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 20 Kb  27.8692 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x8 Stages=5 Approx Shared Storage required = 80 Kb  20.7254 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 80 Kb  34.3645 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 32 Kb  21.6535 TFLOPs
+######## Best Config ############
+Config: TB=128x64x32 WP=64x32x32 INST=16x8x16 Stages=4  Perf=45.2723 TFLOPs
+ ######################################################################
+ CUTLASS: M=8192 N=8192 K=512
+Searching for best config...
+Config: TB=128x256x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 48 Kb  2.6701 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 48 Kb  23.5194 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 32 Kb  2.74089 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 32 Kb  25.1329 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=8x8x4 Stages=2 Approx Shared Storage required = 48 Kb  2.63876 TFLOPs
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 48 Kb  23.4355 TFLOPs
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=2 Approx Shared Storage required = 96 Kb  23.4619 TFLOPs
+Config: TB=64x256x32 WP=32x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 80 Kb  41.996 TFLOPs
+Config: TB=128x128x32 WP=64x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 64 Kb  43.0029 TFLOPs
+Config: TB=128x64x32 WP=64x32x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 48 Kb  47.9558 TFLOPs
+Config: TB=64x128x32 WP=32x64x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 48 Kb  46.5455 TFLOPs
+Config: TB=128x32x32 WP=64x32x32 INST=16x8x16 Stages=4 Approx Shared Storage required = 40 Kb  39.303 TFLOPs
+Config: TB=64x32x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 30 Kb  41.2984 TFLOPs
+Config: TB=32x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 30 Kb  41.0455 TFLOPs
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 128 Kb  Error while launching the kernel
+Config: TB=128x64x64 WP=64x32x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 96 Kb  39.0266 TFLOPs
+Config: TB=64x128x64 WP=32x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 96 Kb  38.9119 TFLOPs
+Config: TB=256x256x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 96 Kb  Error while launching the kernel
+Config: TB=256x128x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 72 Kb  42.9461 TFLOPs
+Config: TB=128x256x32 WP=64x64x32 INST=16x8x16 Stages=3 Approx Shared Storage required = 72 Kb  42.9783 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 40 Kb  46.1945 TFLOPs
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 192 Kb  Error while launching the kernel
+Config: TB=256x128x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 144 Kb  Error while launching the kernel
+Config: TB=128x256x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 192 Kb  Error while launching the kernel
+Config: TB=256x256x64 WP=64x64x64 INST=16x8x16 Stages=4 Approx Shared Storage required = 256 Kb  Error while launching the kernel
+Config: TB=128x128x64 WP=64x64x64 INST=16x8x16 Stages=3 Approx Shared Storage required = 96 Kb  42.545 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=2 Approx Shared Storage required = 16 Kb  44.8201 TFLOPs
+Config: TB=64x64x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 40 Kb  43.4417 TFLOPs
+Config: TB=32x32x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 20 Kb  32.6737 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x8 Stages=5 Approx Shared Storage required = 80 Kb  22.8629 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x16 Stages=5 Approx Shared Storage required = 80 Kb  41.0608 TFLOPs
+Config: TB=128x128x32 WP=32x32x32 INST=16x8x8 Stages=2 Approx Shared Storage required = 32 Kb  23.4186 TFLOPs
+######## Best Config ############
+Config: TB=128x64x32 WP=64x32x32 INST=16x8x16 Stages=4  Perf=47.9558 TFLOPs

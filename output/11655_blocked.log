@@ -1,0 +1,12 @@
+Blocked GEMM end-to-end example
+M=128 K=128 N=128
+TB_M=16 TB_N=16 TB_K=16
+Launching kernel grid(8,8) block(256) smem=2048
+Max absolute difference: 3.8147e-06
+Sum absolute difference: 0.00620295
+PASS: GPU result matches CPU reference within eps=0.001
+---- Benchmark ----
+Avg time: 0.0090624 ms
+Min time: 0.007456 ms
+Max time: 0.010944 ms
+Achieved: 462.825 GFLOP/s

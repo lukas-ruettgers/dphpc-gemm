@@ -1,0 +1,21 @@
+-- Configuring done (0.0s)
+-- Generating done (0.3s)
+-- Build files have been written to: /home/shgoel/dphpc/cutlass/benchmark_gemm/build
+[ 20%] Built target main
+[ 30%] Building CUDA object CMakeFiles/wmma_opti_gemm.dir/src/cudaTensorCoreGemm.cu.o
+[ 50%] Built target wmma_gemm
+[ 70%] Built target cutlass_gemm
+[ 90%] Built target cutlass_gemm_tunable
+[100%] Linking CUDA executable wmma_opti_gemm
+[100%] Built target wmma_opti_gemm
+Initializing...
+GPU Device 0: "Blackwell" with compute capability 12.0
+
+M: 8192 (16 x 512)
+N: 8192 (16 x 512)
+K: 64 (16 x 4)
+Preparing data for GPU...
+Required shared memory size: 64 Kb
+Computing... using high performance kernel compute_gemm 
+Time: 1.495981 ms
+TFLOPS: 5.74

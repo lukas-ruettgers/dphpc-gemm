@@ -1,0 +1,1597 @@
+[1786134] cutlass_gemm_tunable@127.0.0.1
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        92.03
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle      1459238
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1459757
+    Memory Throughput                 %        92.03
+    DRAM Throughput                   %        92.03
+    Duration                         us       612.16
+    L1/TEX Cache Throughput           %        34.93
+    L2 Cache Throughput               %        43.88
+    SM Active Cycles              cycle   1392076.81
+    Compute (SM) Throughput           %        32.19
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.61
+    Warp Cycles Per Executed Instruction           cycle         5.61
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        91.96
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle   1459993.67
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1460533
+    Memory Throughput                 %        91.96
+    DRAM Throughput                   %        91.96
+    Duration                         us       612.42
+    L1/TEX Cache Throughput           %        34.91
+    L2 Cache Throughput               %        43.86
+    SM Active Cycles              cycle   1393351.78
+    Compute (SM) Throughput           %        32.17
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.59
+    Warp Cycles Per Executed Instruction           cycle         5.59
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        91.58
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle      1469174
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1469775
+    Memory Throughput                 %        91.58
+    DRAM Throughput                   %        91.58
+    Duration                         us       616.45
+    L1/TEX Cache Throughput           %        34.70
+    L2 Cache Throughput               %        43.57
+    SM Active Cycles              cycle   1392308.47
+    Compute (SM) Throughput           %        31.97
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.62
+    Warp Cycles Per Executed Instruction           cycle         5.62
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        91.74
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle      1465792
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1466502
+    Memory Throughput                 %        91.74
+    DRAM Throughput                   %        91.74
+    Duration                         us       614.91
+    L1/TEX Cache Throughput           %        34.78
+    L2 Cache Throughput               %        43.65
+    SM Active Cycles              cycle   1390635.36
+    Compute (SM) Throughput           %        32.04
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.59
+    Warp Cycles Per Executed Instruction           cycle         5.59
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        91.82
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle   1463387.67
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1463958
+    Memory Throughput                 %        91.82
+    DRAM Throughput                   %        91.82
+    Duration                         us       613.63
+    L1/TEX Cache Throughput           %        34.83
+    L2 Cache Throughput               %        43.75
+    SM Active Cycles              cycle   1387410.86
+    Compute (SM) Throughput           %        32.10
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.61
+    Warp Cycles Per Executed Instruction           cycle         5.61
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        92.22
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle   1458441.33
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1459085
+    Memory Throughput                 %        92.22
+    DRAM Throughput                   %        92.22
+    Duration                         us       611.68
+    L1/TEX Cache Throughput           %        34.95
+    L2 Cache Throughput               %        43.89
+    SM Active Cycles              cycle   1407112.17
+    Compute (SM) Throughput           %        32.20
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.58
+    Warp Cycles Per Executed Instruction           cycle         5.58
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        91.78
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle      1465284
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1466064
+    Memory Throughput                 %        91.78
+    DRAM Throughput                   %        91.78
+    Duration                         us       614.98
+    L1/TEX Cache Throughput           %        34.79
+    L2 Cache Throughput               %        43.67
+    SM Active Cycles              cycle   1389149.78
+    Compute (SM) Throughput           %        32.05
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.59
+    Warp Cycles Per Executed Instruction           cycle         5.59
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        91.97
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle   1459678.33
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1460187
+    Memory Throughput                 %        91.97
+    DRAM Throughput                   %        91.97
+    Duration                         us       612.35
+    L1/TEX Cache Throughput           %        34.92
+    L2 Cache Throughput               %        43.85
+    SM Active Cycles              cycle   1395480.94
+    Compute (SM) Throughput           %        32.18
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.59
+    Warp Cycles Per Executed Instruction           cycle         5.59
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        91.97
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle   1462147.33
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1462575
+    Memory Throughput                 %        91.97
+    DRAM Throughput                   %        91.97
+    Duration                         us       613.31
+    L1/TEX Cache Throughput           %        34.86
+    L2 Cache Throughput               %        43.81
+    SM Active Cycles              cycle   1396943.28
+    Compute (SM) Throughput           %        32.12
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.59
+    Warp Cycles Per Executed Instruction           cycle         5.59
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        91.93
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle   1460479.67
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1460847
+    Memory Throughput                 %        91.93
+    DRAM Throughput                   %        91.93
+    Duration                         us       612.96
+    L1/TEX Cache Throughput           %        34.90
+    L2 Cache Throughput               %        43.83
+    SM Active Cycles              cycle   1389480.17
+    Compute (SM) Throughput           %        32.16
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.62
+    Warp Cycles Per Executed Instruction           cycle         5.62
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        91.87
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle   1464568.33
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1465133
+    Memory Throughput                 %        91.87
+    DRAM Throughput                   %        91.87
+    Duration                         us       614.24
+    L1/TEX Cache Throughput           %        34.80
+    L2 Cache Throughput               %        43.70
+    SM Active Cycles              cycle   1392435.44
+    Compute (SM) Throughput           %        32.07
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.61
+    Warp Cycles Per Executed Instruction           cycle         5.61
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        91.79
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle      1465306
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1466045
+    Memory Throughput                 %        91.79
+    DRAM Throughput                   %        91.79
+    Duration                         us       614.82
+    L1/TEX Cache Throughput           %        34.79
+    L2 Cache Throughput               %        43.68
+    SM Active Cycles              cycle   1390041.22
+    Compute (SM) Throughput           %        32.05
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.62
+    Warp Cycles Per Executed Instruction           cycle         5.62
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        91.97
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle      1458719
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1459375
+    Memory Throughput                 %        91.97
+    DRAM Throughput                   %        91.97
+    Duration                         us       611.84
+    L1/TEX Cache Throughput           %        34.94
+    L2 Cache Throughput               %        43.88
+    SM Active Cycles              cycle   1398004.11
+    Compute (SM) Throughput           %        32.20
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.59
+    Warp Cycles Per Executed Instruction           cycle         5.59
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
+  void Kernel<Gemm<MmaMultistage<GemmShape<64, 128, 64>, PredicatedTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajor, 1, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<64, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, PredicatedTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajor, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, Array<half_t, 8, 0>, 0, NoPermute>, RegularTileAccessIterator<MatrixShape<64, 128>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, 0, PitchLinearWarpRakedThreadMap<PitchLinearShape<128, 64>, 128, PitchLinearShape<8, 4>, 8>, 16>, 1, float, RowMajor, MmaPolicy<MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, MatrixShape<0, 0>, MatrixShape<0, 0>, 1>, 4, 0, bool>, Epilogue<GemmShape<64, 128, 64>, MmaTensorOp<GemmShape<32, 64, 64>, half_t, RowMajorTensorOpMultiplicandCrosswise<16, 64>, half_t, RowMajorTensorOpMultiplicandCongruous<16, 64>, float, RowMajor, MmaTensorOpPolicy<Mma<GemmShape<16, 8, 16>, 32, half_t, RowMajor, half_t, ColumnMajor, float, RowMajor, OpMultiplyAdd>, MatrixShape<1, 1>>, 1, 0, bool>, 1, PredicatedTileIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>, float, 0, NoPermute, 0>, FragmentIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, Array<float, 4, 1>, RowMajor>, TileIteratorTensorOp<GemmShape<32, 64, 64>, GemmShape<16, 8, 16>, float, RowMajor>, SharedLoadIterator<OutputTileOptimalThreadMap<OutputTileShape<128, 8, 2, 1, 1>, OutputTileShape<1, 4, 1, 1, 4>, 128, 1, 32>::CompactedThreadMap, float, 4>, LinearCombination<float, 1, float, float, 0, 2, float>, MatrixShape<0, 8>, 1, 1>, GemmIdentityThreadblockSwizzle<1>, 0>>(Params) (128, 64, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.0
+    Section: Command line profiler metrics
+    -------------------------------------------------------- ----------- ------------
+    Metric Name                                              Metric Unit Metric Value
+    -------------------------------------------------------- ----------- ------------
+    dram__throughput.avg.pct_of_peak_sustained_elapsed                 %        91.71
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.avg                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.max                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.min                        0
+    l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum                        0
+    sm__cycles_elapsed.avg                                         cycle   1466723.33
+    -------------------------------------------------------- ----------- ------------
+
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz        13.79
+    SM Frequency                    Ghz         2.38
+    Elapsed Cycles                cycle      1467586
+    Memory Throughput                 %        91.71
+    DRAM Throughput                   %        91.71
+    Duration                         us       615.01
+    L1/TEX Cache Throughput           %        34.75
+    L2 Cache Throughput               %        43.66
+    SM Active Cycles              cycle   1390432.14
+    Compute (SM) Throughput           %        32.02
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing DRAM in the Memory Workload Analysis section.                                              
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle         5.60
+    Warp Cycles Per Executed Instruction           cycle         5.60
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    29.79
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    247580.44
+    Executed Instructions                           inst     35651584
+    Avg. Issued Instructions Per Scheduler          inst    247580.44
+    Issued Instructions                             inst     35651584
+    ---------------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 50%                                                                                       
+          This kernel executes 0 fused and 2097152 non-fused FP32 instructions. By converting pairs of non-fused        
+          instructions to their fused (https://docs.nvidia.com/cuda/floating-point/#cuda-and-floating-point),           
+          higher-throughput equivalent, the achieved FP32 performance could be increased by up to 50% (relative to its  
+          current performance).                                                                                         
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   128
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   0
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                   8192
+    Preferred Cluster Size                                         0
+    Registers Per Thread             register/thread             152
+    Shared Memory Configuration Size           Kbyte          102.40
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block           98.30
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              36
+    Stack Size                                                  1024
+    Threads                                   thread         1048576
+    # TPCs                                                        18
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                              227.56
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster            0
+    Max Cluster Size                      block            8
+    Overall GPU Occupancy                     %            0
+    Cluster Occupancy                         %            0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block           12
+    Theoretical Active Warps per SM        warp            4
+    Theoretical Occupancy                     %         8.33
+    Achieved Occupancy                        %         8.32
+    Achieved Active Warps Per SM           warp         3.99
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 91.67%                                                                                    
+          The 1.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 12. This kernel's theoretical occupancy (8.3%) is limited by the required amount of       
+          shared memory.                                                                                                
+
