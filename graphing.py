@@ -1,6 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
-from typing import List, Tuple, Dict, Union
 from collections import defaultdict
 import statistics
 
@@ -76,7 +74,7 @@ ERROR_BAR_SIGMA = 1.0  # Multiplier for standard deviation (1.0 = 1 std dev, 2.0
 # PLOTTING FUNCTION
 # ====================
 
-def plot_line_graph(points: List[Tuple[float, float]]):
+def plot_line_graph(points: list[tuple[float, float]]):
     """
     Plot a line graph using the provided points and global configuration.
     Handles multiple y values for the same x value by calculating median and standard deviation.
