@@ -1,315 +1,254 @@
-from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd, csv
-import argparse
-import sys
-from enum import Enum
-from io import TextIOWrapper
-import subprocess
-import time
+from typing import List, Tuple, Dict, Union
+from collections import defaultdict
+import statistics
 
+# ====================
+# GLOBAL CONFIGURATION
+# ====================
 
-KERNELS_PER_RUN = 1 # These many consecutive kernels are considered part of the same run.
-WARMUP_RUNS = 0 # Skips warmup runs from the CSV.
+USE_FILE = False  # Set to True to read points from a file
+FILENAME = 'data_points.txt'  # File containing points if USE_FILE is True
 
-# Cmdline arguments to pass to the program (if --bin option chosen).
-# The program is executed once per item in the list.
-PROGRAM_ARGS = [
-    '--M 1024 --N 512 --K 256 --threadblock 32' # Example args,
-]
+# Graph appearance
+GRAPH_TITLE = "Line Graph with Error Bars"
+X_AXIS_LABEL = "X Axis"
+Y_AXIS_LABEL = "Y Axis"
+FIG_SIZE = (10, 6)  # (width, height) in inches
+DPI = 100  # Resolution of the figure
 
-DEFAULT_NCU_REP = 'ncu_benchmark_output.ncu-rep' # Must match ncu_benchmark.sbatch.
-DEFAULT_CSV = 'ncu_benchmark_output.csv'
-DEFAULT_ROOFLINE_PLOT = 'roofline_plot.png'
+# Line style
+LINE_COLOR = "blue"
+LINE_WIDTH = 2
+LINE_STYLE = "-"  # "-" for solid, "--" for dashed, ":" for dotted, "-." for dash-dot
+MARKER_STYLE = "o"  # "o" for circles, "s" for squares, "^" for triangles, etc.
+MARKER_SIZE = 8
+MARKER_COLOR = "red"
+MARKER_EDGE_COLOR = "black"
+MARKER_EDGE_WIDTH = 1
 
+# Error bar style
+ERROR_BAR_COLOR = "black"
+ERROR_BAR_WIDTH = 2
+ERROR_BAR_CAP_SIZE = 5
+SHOW_ERROR_BARS = True
+ERROR_BAR_ALPHA = 0.7
+ERROR_BAR_STYLE = "-"  # "-" for solid, "--" for dashed
 
-def get_metric_value(df: pd.DataFrame, metric_name: str) -> float:
-    return float(df[df['Metric Name'] == metric_name]['Metric Value'].values[0])
+# Grid and background
+SHOW_GRID = True
+GRID_STYLE = "--"
+GRID_COLOR = "gray"
+GRID_ALPHA = 0.3
+BACKGROUND_COLOR = "white"
 
+# Axis limits (set to None for auto-scaling)
+X_LIMITS = None  # (min, max) or None
+Y_LIMITS = None  # (min, max) or None
 
-@dataclass
-class RunData:
-    """Data for a single run."""
+# Axis ticks
+X_TICK_COUNT = 10  # Approximate number of ticks (set to None for auto)
+Y_TICK_COUNT = 10  # Approximate number of ticks (set to None for auto)
+SHOW_TICK_LABELS = True
 
-    performance: float # GFLOP/s
-    bandwidth: float # GB/s
-    runtime: float # us
+# Legend
+SHOW_LEGEND = True
+LEGEND_LABEL = "Median Values"
+LEGEND_LOCATION = "best"  # "upper left", "upper right", "lower left", "lower right", "best"
+LEGEND_FRAME_ALPHA = 0.9
 
-    @classmethod
-    def from_dataframe(cls, df: pd.DataFrame) -> 'RunData':
-        sol_throughput = df[df['Section Name'] == 'GPU Speed Of Light Throughput']
-        runtime = get_metric_value(sol_throughput, 'Duration') # us
+# Font sizes
+TITLE_FONT_SIZE = 16
+AXIS_LABEL_FONT_SIZE = 14
+TICK_LABEL_FONT_SIZE = 10
+LEGEND_FONT_SIZE = 12
+
+# Output settings
+OUTPUT_FILENAME = "line_graph.png"
+OUTPUT_DPI = 300  # Resolution for saved file
+
+# Statistics settings
+USE_MEDIAN = True  # If False, uses mean instead of median
+ERROR_BAR_SIGMA = 1.0  # Multiplier for standard deviation (1.0 = 1 std dev, 2.0 = 2 std dev, etc.)
+
+# ====================
+# PLOTTING FUNCTION
+# ====================
+
+def plot_line_graph(points: List[Tuple[float, float]]):
+    """
+    Plot a line graph using the provided points and global configuration.
+    Handles multiple y values for the same x value by calculating median and standard deviation.
+    
+    Parameters:
+    -----------
+    points : List[Tuple[float, float]]
+        List of (x, y) tuples to plot. Multiple y values for same x are aggregated.
+    
+    Returns:
+    --------
+    fig, ax : matplotlib figure and axis objects
+    """
+    
+    # Group y values by x coordinate
+    grouped_data = defaultdict(list)
+    for x, y in points:
+        grouped_data[x].append(y)
+    
+    # Calculate statistics for each x value
+    x_values = []
+    y_medians = []
+    y_stdevs = []
+    y_means = []
+    
+    for x in sorted(grouped_data.keys()):
+        y_list = grouped_data[x]
         
-        # NOTE: Should we add individual MUL and ADD to performance?
-        sol_roofline = df[df['Section Name'] == 'GPU Speed Of Light Roofline Chart']
-        sm_freq = get_metric_value(sol_roofline, 'SM Frequency') # GHz
-        performance = (
-            get_metric_value(sol_roofline, 'Predicated-On FFMA Operations Per Cycle') +
-            get_metric_value(sol_roofline, 'Predicated-On FADD Thread Instructions Executed Per Cycle') +
-            get_metric_value(sol_roofline, 'Predicated-On FMUL Thread Instructions Executed Per Cycle')
-        ) * sm_freq # GFLOP/s
-
-        bandwidth = get_metric_value(sol_roofline, 'DRAM Bandwidth') # First value is single-precision.
-
-        return cls(
-            performance = performance,
-            bandwidth = bandwidth,
-            runtime = runtime
-        )
-
+        if len(y_list) > 0:
+            x_values.append(x)
+            
+            if USE_MEDIAN:
+                # Calculate median
+                try:
+                    median_val = statistics.median(y_list)
+                except statistics.StatisticsError:
+                    median_val = float('nan')
+                y_medians.append(median_val)
+            else:
+                # Calculate mean
+                y_means.append(statistics.mean(y_list))
+            
+            # Calculate standard deviation (only if we have at least 2 values)
+            if len(y_list) > 1:
+                stdev_val = statistics.stdev(y_list)
+            else:
+                stdev_val = 0  # No standard deviation for single value
+            y_stdevs.append(stdev_val)
     
-    @classmethod
-    def combine(cls, data: 'list[RunData]') -> 'RunData':
-        """Combines multiple RunDatas (all kernel calls belonging to the same run)."""
-
-        total_runtime = 0
-        total_gflops = 0
-        total_gbs = 0
-
-        for d in data:
-            total_runtime += d.runtime
-            total_gflops += d.performance * d.runtime
-            total_gbs = d.bandwidth * d.runtime
-
-        # Weighted means of performance and bandwidth.
-        mean_performance = total_gflops / total_runtime
-        mean_bandwidth = total_gbs / total_runtime
-
-        return cls(
-            performance = mean_performance,
-            bandwidth = mean_bandwidth,
-            runtime = total_runtime
-        )
-
-
-@dataclass
-class Data(RunData):
-    """Data over an entire set of runs (using median)."""
-
-    peak_performance: float # GFLOP/s
-    peak_bandwidth: float # GB/s
-    arithmetic_intensity: float # FLOP/byte
-
-    def __init__(self, dfs: list[pd.DataFrame], kernels_per_run: int, warmup_runs: int) -> None:
-        # Validate grouping parameters.
-        if len(dfs) % kernels_per_run != 0:
-            raise Exception(f'Kernels per run ({kernels_per_run}) does not divide number of run entries in CSV ({len(dfs)})')
-        run_count = len(dfs) / kernels_per_run
-
-        if warmup_runs > run_count:
-            raise Exception(f'Warmup runs ({warmup_runs}) exceeds number of runs ({run_count})')
-        if warmup_runs == run_count:
-            raise Exception(f'Equal number of warmup runs and total runs ({run_count})')
+    # Choose which central tendency measure to use
+    if USE_MEDIAN:
+        y_central = y_medians
+        central_label = "Median"
+    else:
+        y_central = y_means
+        central_label = "Mean"
+    
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=FIG_SIZE, dpi=DPI)
+    
+    # Set background color
+    fig.patch.set_facecolor(BACKGROUND_COLOR)
+    ax.set_facecolor(BACKGROUND_COLOR)
+    
+    # Plot the line with markers
+    line_plot = ax.plot(x_values, y_central, 
+                        color=LINE_COLOR, 
+                        linewidth=LINE_WIDTH, 
+                        linestyle=LINE_STYLE,
+                        marker=MARKER_STYLE,
+                        markersize=MARKER_SIZE,
+                        markerfacecolor=MARKER_COLOR,
+                        markeredgecolor=MARKER_EDGE_COLOR,
+                        markeredgewidth=MARKER_EDGE_WIDTH,
+                        label=f"{LEGEND_LABEL} ({central_label})" if SHOW_LEGEND else None)
+    
+    # Add error bars if enabled
+    if SHOW_ERROR_BARS and len(y_stdevs) > 0 and any(stdev > 0 for stdev in y_stdevs):
+        error_amounts = [stdev * ERROR_BAR_SIGMA for stdev in y_stdevs]
         
-        # Skip warmup runs.
-        dfs = dfs[warmup_runs * kernels_per_run : ]
-
-        raw_runs = [RunData.from_dataframe(df) for df in dfs]
-        runs = [RunData.combine(raw_runs[i : i + kernels_per_run]) for i in range(0, len(raw_runs), kernels_per_run)]
-
-        self.performance = float(np.median([run.performance for run in runs]))
-        self.bandwidth = float(np.median([run.bandwidth for run in runs]))
-        self.runtime = float(np.median([run.runtime for run in runs]))
-
-        df = dfs[0]
-        sol_roofline = df[df['Section Name'] == 'GPU Speed Of Light Roofline Chart']
-        sm_freq = get_metric_value(sol_roofline, 'SM Frequency') # GHz
-        self.peak_performance = get_metric_value(sol_roofline, 'Theoretical Predicated-On FFMA Operations') * sm_freq # GFLOP/s
-        dram_freq = get_metric_value(sol_roofline, 'DRAM Frequency') # GHz
-        self.peak_bandwidth = get_metric_value(sol_roofline, 'Theoretical DRAM Bytes Accessible') * dram_freq # GB/s
-
-        # Calculated values.
-        self.arithmetic_intensity = self.performance / self.bandwidth # FLOP/byte
-
+        errorbar_plot = ax.errorbar(x_values, y_central, 
+                                    yerr=error_amounts,
+                                    fmt='none',  # Don't plot markers (we already have them)
+                                    ecolor=ERROR_BAR_COLOR,
+                                    elinewidth=ERROR_BAR_WIDTH,
+                                    capsize=ERROR_BAR_CAP_SIZE,
+                                    alpha=ERROR_BAR_ALPHA,
+                                    label=f"±{ERROR_BAR_SIGMA} Std Dev" if SHOW_LEGEND else None)
     
-    def __str__(self) -> str:
-        result = f'Peak Performance: {self.peak_performance} GFLOP/s\n'
-        result += f'Peak Bandwidth: {self.peak_bandwidth} GB/s\n'
-        result += f'Median Performance: {self.performance} GFLOP/s\n'
-        result += f'Median Bandwidth: {self.bandwidth} GB/s\n'
-        result += f'Median Runtime: {self.runtime} us\n'
-        result += f'Arithmetic Intensity: {self.arithmetic_intensity} FLOP/byte\n'
-        return result
-        
-
-def split_dataframe_by_id(df: pd.DataFrame) -> list[pd.DataFrame]:
-    """Splits dataframe into chunks of rows by ID"""
-
-    ids = df['ID'].unique()
-    chunks: list[pd.DataFrame] = [df[df['ID'] == id] for id in ids]
+    # Set title and labels
+    ax.set_title(GRAPH_TITLE, fontsize=TITLE_FONT_SIZE, pad=20)
+    ax.set_xlabel(X_AXIS_LABEL, fontsize=AXIS_LABEL_FONT_SIZE, labelpad=10)
+    ax.set_ylabel(Y_AXIS_LABEL, fontsize=AXIS_LABEL_FONT_SIZE, labelpad=10)
     
-    return chunks
-
-
-def parse_ncu_csv(csv_file: str | TextIOWrapper, kernels_per_run: int, warmup_runs: int) -> Data:
-    """Parses NCU CSV file and returns a list of datapoints."""
-    try:
-        df = pd.read_csv(csv_file, quoting=csv.QUOTE_ALL, usecols=[
-            'ID', 'Section Name','Body Item Label','Metric Name','Metric Unit','Metric Value'
-        ])
-    except Exception as e:
-        print(f"Error reading CSV file: {e}")
-        sys.exit(1)
-
-    if df.empty:
-        raise Exception('CSV file is empty: No kernel invocations occured')
-
-    dfs = split_dataframe_by_id(df)
-    data = Data(dfs, kernels_per_run, warmup_runs)
-    return data
-
-
-def plot_roofline(data: Data, title: str) -> None:
-    plt.figure(figsize=(10, 6), dpi=200)
-    plt.title(title, fontweight='bold', pad=20)
+    # Set axis limits if specified
+    if X_LIMITS is not None:
+        ax.set_xlim(X_LIMITS)
+    if Y_LIMITS is not None:
+        ax.set_ylim(Y_LIMITS)
     
-    # Set logarithmic scales
-    plt.xscale('log')
-    plt.yscale('log')
+    # Configure ticks
+    if X_TICK_COUNT is not None:
+        ax.locator_params(axis='x', nbins=X_TICK_COUNT)
+    if Y_TICK_COUNT is not None:
+        ax.locator_params(axis='y', nbins=Y_TICK_COUNT)
     
-    # Calculate ridge point
-    # ridge_point = peak_compute / peak_bandwidth
+    # Set tick label font size
+    ax.tick_params(axis='both', labelsize=TICK_LABEL_FONT_SIZE)
     
-    # Generate roofline curve
-    ai_range = np.logspace(-2, 2, 500) # Arithmetic intensity range
-    performance_roofline = np.minimum(data.peak_bandwidth * ai_range, data.peak_performance)
+    # Configure grid
+    if SHOW_GRID:
+        ax.grid(True, linestyle=GRID_STYLE, color=GRID_COLOR, alpha=GRID_ALPHA)
     
-    # Plot roofline boundaries
-    plt.plot(ai_range, performance_roofline, 'k-', linewidth=2, label='Roofline')
-    plt.axhline(y=data.peak_performance, color='#707070', linestyle='--', alpha=0.7)
+    # Add legend if enabled
+    if SHOW_LEGEND:
+        legend = ax.legend(loc=LEGEND_LOCATION, fontsize=LEGEND_FONT_SIZE)
+        legend.get_frame().set_alpha(LEGEND_FRAME_ALPHA)
     
-    # Plot data points
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+    # Add statistics summary to the plot
+    total_points = len(points)
+    unique_x = len(grouped_data)
+    avg_y_per_x = total_points / unique_x if unique_x > 0 else 0
     
-    color = colors[1]
-    plt.plot(data.arithmetic_intensity, data.performance, 'o', markersize=8, label='Kernel', color=color)
+    stats_text = (f"Statistics Summary:\n"
+                  f"Total points: {total_points}\n"
+                  f"Unique x-values: {unique_x}\n"
+                  f"Avg y per x: {avg_y_per_x:.2f}")
     
-    # Labels and styling
-    plt.xlabel('Arithmetic Intensity (FLOP/byte)')
-    plt.ylabel('Performance (GFLOP/s)')
-    plt.grid(True, alpha=0.3)
-    plt.gca().set_facecolor('#f8f8f8')
+    # Add text box with statistics
+    ax.text(0.02, 0.98, stats_text,
+            transform=ax.transAxes,
+            fontsize=9,
+            verticalalignment='top',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
     
-    # Add peak performance info on the side
-    peak_info = f'Peak Performance: {data.peak_performance:.0f} GFLOP/s\nPeak Bandwidth: {data.peak_bandwidth:.0f} GB/s'
-    peak_info = f'{peak_info}\nMedian Performance: {data.performance:.0f} GFLOP/s\nMedian Bandwidth: {data.bandwidth:.2f} GB/s'
-    peak_info = f'{peak_info}\nArithmetic Intensity: {data.arithmetic_intensity:.2f} FLOP/byte'
-
-    plt.annotate(peak_info, 
-                xy=(1.02, 0.5), xycoords='axes fraction',
-                bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.9),
-                fontsize=10, ha='left', va='top')
+    # Adjust layout
+    # plt.tight_layout()
     
-    # Legend
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    # Save figure
+    plt.savefig(OUTPUT_FILENAME, dpi=OUTPUT_DPI, bbox_inches='tight')
+    print(f"Figure saved as {OUTPUT_FILENAME}")
     
-    plt.tight_layout()
-    plt.savefig(DEFAULT_ROOFLINE_PLOT, bbox_inches='tight')
-
-
-def run_benchmark(executable: str) -> str:
-    """Returns name of .ncu-rep file generated by NCU after running the benchmark."""
-
-    print('Running NCU profiling...')
-
-    cmd = ['sbatch', 'ncu_benchmark.sbatch', executable]
-    subprocess.run(cmd, check=True).check_returncode()
-
-    # Wait until `squeue` shows job is running.
-    while True:
-        time.sleep(3)
-        print('Checking job status...')
-        result = subprocess.run(['squeue'], capture_output=True, text=True)
-        result.check_returncode()
-        if 'nwadekar' not in result.stdout:
-            break
-
-    ncu_rep_file = DEFAULT_NCU_REP
-    print(f'NCU profiling complete. Writing results to {ncu_rep_file}')
-    return ncu_rep_file
-
-
-def generate_csv(ncu_rep: str) -> str:
-    """Generates CSV file from .ncu-rep file and returns path to CSV file."""
-
-    csv_file = DEFAULT_CSV
-    cmd = f'ncu --import {ncu_rep} --csv --print-details all --section SpeedOfLight --section SpeedOfLight_RooflineChart'.split()
-    result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-    result.check_returncode()
-
-    print(f'Generating CSV file: {csv_file}')
-    with open(csv_file, 'w') as f:
-        f.write(result.stdout)
-    return csv_file
-
-
-class ScriptMode(Enum):
-    BIN = 1
-    NCU_REP = 2
-    CSV = 3
-
-def verify_args(args: argparse.Namespace) -> ScriptMode:
-    """Returns the mode of execution."""
-
-    # Priority order: bin, ncu-rep, csv.
-
-    if args.bin is None and args.ncu_rep is None and args.csv is None:
-        print('Error: Either --bin, --ncu-rep, or --csv must be provided.')
-        exit(1)
-
-    if args.bin is not None:
-        return ScriptMode.BIN
-    if args.ncu_rep is not None:
-        return ScriptMode.NCU_REP
-    return ScriptMode.CSV
+    # Print statistics to console
+    print("\n=== Statistics Summary ===")
+    print(f"Total data points: {total_points}")
+    print(f"Unique x-values: {unique_x}")
+    print(f"Average y-values per x: {avg_y_per_x:.2f}")
+    print(f"Using {central_label.lower()} for central tendency")
+    print(f"Error bars show ±{ERROR_BAR_SIGMA} standard deviations")
+    
+    return fig, ax
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate roofline plot from NSight Compute CSV')
-    parser.add_argument('--bin', default=None, help='Path to the executable binary to profile')
-    parser.add_argument('--ncu-rep', default=None, help='Path to the .ncu-rep file generated by NCU')
-    parser.add_argument('--csv', default=None, help='Path to the CSV file containing CSV data')
-    parser.add_argument('--kernels-per-run', default=KERNELS_PER_RUN, help='Number of kernel calls done per run. This value overrides the one set in the script.')
-    parser.add_argument('--warmup-runs', default=WARMUP_RUNS, help='Number of warmup runs. This value overrides the one set in the script.')
+    points = []
+    if USE_FILE:
+        # Read points from file
+        with open(FILENAME, 'r') as f:
+            for line in f:
+                x_str, y_str = line.strip().split(',')
+                points.append((float(x_str), float(y_str)))
+    else:
+        # Use hardcoded example points
+        points = [
+            (0, 1.0), (0, 1.2), (0, 0.9),
+            (1, 2.1), (1, 2.3), (1, 1.8),
+            (2, 3.0), (2, 3.2), (2, 2.9),
+            (3, 4.1), (3, 4.3), (3, 3.8),
+            (4, 5.0), (4, 5.2), (4, 4.9),
+        ]
     
-    args = parser.parse_args()
-    mode = verify_args(args)
-
-    bin: str | None = args.bin
-    ncu_rep: str | None = args.ncu_rep
-    csv: str | None = args.csv
-
-    kernels_per_run = int(args.kernels_per_run)
-    warmup_runs = int(args.warmup_runs)
-    
-    if mode == ScriptMode.BIN:
-        assert bin is not None
-        
-        for i, args in enumerate(PROGRAM_ARGS):
-            print(f"Running benchmark {i} on binary: {bin}")
-            ncu_rep = run_benchmark(bin)
-            print(f"Generating CSV from NCU report: {ncu_rep}")
-            csv = generate_csv(ncu_rep)
-            print(f"Parsing CSV file: {csv}")
-            data = parse_ncu_csv(csv, kernels_per_run, warmup_runs)
-            print(f'BENCHMARK `{args}`:')
-            print(data)
-            print()
-
-        plot_roofline(data, 'Roofline Analysis')
-
-    if mode == ScriptMode.NCU_REP:
-        assert ncu_rep is not None
-        print(f"Generating CSV from NCU report: {ncu_rep}")
-        csv = generate_csv(ncu_rep) # Proceed to CSV mode after generating CSV.
-
-    assert csv is not None
-    print(f"Parsing CSV file: {csv}")
-    data = parse_ncu_csv(csv, kernels_per_run, warmup_runs)
-    print(data)
-    
-    plot_roofline(data, 'Roofline Analysis')
+    plot_line_graph(points)
 
 
 if __name__ == "__main__":
