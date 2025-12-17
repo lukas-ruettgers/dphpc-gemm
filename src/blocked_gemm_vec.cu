@@ -17,8 +17,8 @@
 #endif
 
 #if BENCHMARK
-float WARMUP=3;
-float ITER=10;
+int WARMUP=3;
+int ITER=10;
 #endif
 
 // simple CUDA error-check macro
