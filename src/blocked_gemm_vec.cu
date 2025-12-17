@@ -18,7 +18,7 @@
 
 #if BENCHMARK
 int WARMUP=3;
-int ITER=10;
+int ITER=50;
 #endif
 
 // simple CUDA error-check macro
@@ -301,6 +301,7 @@ int main(int argc, char** argv) {
     // -----------------------------
     float total_ms = 0.f, min_ms = 1e9, max_ms = 0.f;
 
+    std::cout << "-----BEGIN\n";
     for (int i = 0; i < ITER; i++) {
         cudaEventRecord(start);
 
@@ -312,10 +313,13 @@ int main(int argc, char** argv) {
         float ms = 0;
         cudaEventElapsedTime(&ms, start, stop);
 
+        std::cout << ms << "\n";
+
         total_ms += ms;
         min_ms = std::min(min_ms, ms);
         max_ms = std::max(max_ms, ms);
     }
+    std::cout << "-----END\n";
 
     float avg_ms = total_ms / ITER;
 

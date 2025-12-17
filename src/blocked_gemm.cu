@@ -18,7 +18,7 @@
 
 #if BENCHMARK
 int WARMUP=3;
-int ITER=10;
+int ITER=50;
 #endif
 
 
