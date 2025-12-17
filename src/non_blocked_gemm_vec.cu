@@ -8,7 +8,7 @@
 
 #ifndef CPU_DEBUG
 // Set this to 1 to verify the correctness of the GPU-computed matrix.
-#define CPU_DEBUG 1
+#define CPU_DEBUG 0
 #endif
 
 #ifndef BENCHMARK
@@ -36,9 +36,9 @@ int TB_N = 16;
 int TB_K = 16;
 
 // Matrix sizes (runtime)
-int M = 1024;
-int K = 1024;
-int N = 1024;
+int M = 4096;
+int K = 4096;
+int N = 4096;
 
 // Derived block counts (runtime)
 int BM, BK, BN;
@@ -82,33 +82,53 @@ __global__ void gemm_kernel(
         int global_row_B = bk * TB_K_;         // starting row of tile in B
         int global_col_B = bn * TB_N_;         // starting col of tile in B
 
+        // 1. Cast Shared Memory pointers to float4
+        float4* sA_vec = reinterpret_cast<float4*>(sA);
+        float4* sB_vec = reinterpret_cast<float4*>(sB);
+
+        // We assume TB_K is a multiple of 4.
+        int num_vec_A = (TB_M_ * TB_K_) / 4;
+
         // cooperative load of A tile: TB_M x TB_K
-        for (int idx = tid; idx < TB_M_ * TB_K_; idx += blockDim.x) {
-            int i = idx / TB_K_;   // local row tid-> 0,1,..., 63, 8x4
-            int j = idx % TB_K_;   // local col
+        for (int idx = tid; idx < num_vec_A; idx += blockDim.x) {
+            int i = idx / (TB_K_/4);   // local row tid-> 0,1,..., 63, 8x4
+            int j = idx % (TB_K_/4);   // local col
+            j*=4;
 
             int row = global_row_A + i;
             int col = global_col_A + j;
-
+            
+            const float4* Ablk_vec = reinterpret_cast<const float4*>(&Ablk[row * K_ + col]);
 
             if (row < M_ && col < K_)
-                sA[i * TB_K_ + j] = Ablk[row * K_ + col];   // row-major A
+                sA_vec[idx] = *Ablk_vec;   // row-major A
             else
-                sA[i * TB_K_ + j] = 0.0f;
+                sA_vec[idx] = {0.0f, 0.0f, 0.0f, 0.0f};
+            
+
+            // if (row < M_ && col < K_)
+            //     sA[i * TB_K_ + j] = Ablk[row * K_ + col];   // row-major A
+            // else
+            //     sA[i * TB_K_ + j] = 0.0f;
         }
+        
+        int num_vec_B = (TB_K_ * TB_N_) / 4;
 
         // cooperative load of B tile: TB_K × TB_N
-        for (int idx = tid; idx < TB_K_ * TB_N_; idx += blockDim.x) {
-            int i = idx / TB_N_;   // local row
-            int j = idx % TB_N_;   // local col
+        for (int idx = tid; idx < num_vec_B; idx += blockDim.x) {
+            int i = idx / (TB_N_/4);   // local row
+            int j = idx % (TB_N_/4);   // local col
+            j*=4;
 
             int row = global_row_B + i;
             int col = global_col_B + j;
 
+            const float4* Bblk_vec = reinterpret_cast<const float4*>(&Bblk[row * N_ + col]);
+
             if (row < K_ && col < N_)
-                sB[i * TB_N_ + j] = Bblk[row * N_ + col];   // row-major B
+                sB_vec[idx] = *Bblk_vec;   // row-major B
             else
-                sB[i * TB_N_ + j] = 0.0f;
+                sB_vec[idx] = {0.0f, 0.0f, 0.0f, 0.0f};
         }
 
         __syncthreads();
@@ -164,7 +184,7 @@ int main(int argc, char** argv) {
     BN = N / TB_N;
     BK = K / TB_K;
 
-    std::cout << "Non-Blocked GEMM end-to-end example\n";
+    std::cout << "Non-Blocked GEMM (vec) end-to-end example\n";
     std::cout << "M=" << M << " K=" << K << " N=" << N << "\n";
     std::cout << "TB_M=" << TB_M << " TB_N=" << TB_N << " TB_K=" << TB_K << "\n";
 

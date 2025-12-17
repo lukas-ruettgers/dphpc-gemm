@@ -6,6 +6,21 @@
 #include <random>
 #include <iostream>
 
+#ifndef CPU_DEBUG
+// Set this to 1 to verify the correctness of the GPU-computed matrix.
+#define CPU_DEBUG 0
+#endif
+
+#ifndef BENCHMARK
+// Set this to 1 to verify the correctness of the GPU-computed matrix.
+#define BENCHMARK 1
+#endif
+
+#if BENCHMARK
+float WARMUP=3;
+float ITER=10;
+#endif
+
 // simple CUDA error-check macro
 inline void cudaCheck(cudaError_t err) {
     if (err != cudaSuccess) {
@@ -14,20 +29,18 @@ inline void cudaCheck(cudaError_t err) {
     }
 }
 
-// Tile sizes (tune as desired)
-constexpr int TB_M = 32;
-constexpr int TB_N = 32;
-constexpr int TB_K = 32;
+// Tile sizes (runtime)
+int TB_M = 16;
+int TB_N = 16;
+int TB_K = 16;
 
-// Matrix sizes (must be multiples of TB sizes in this simple demo)
-constexpr int M = 1024;   // rows of A and C
-constexpr int K = 1024;   // cols of A, rows of B
-constexpr int N = 1024;   // cols of B and C
+// Matrix sizes (runtime)
+int M = 1024;
+int K = 1024;
+int N = 1024;
 
-// Derived block counts
-constexpr int BM = M / TB_M;
-constexpr int BK = K / TB_K;
-constexpr int BN = N / TB_N;
+// Derived block counts (runtime)
+int BM, BK, BN;
 
 // Host blocking helpers (row-major input -> blocked 4D layout)
 void block_A_host(
@@ -74,10 +87,12 @@ void block_B_host(
 // Device kernel: expects Ablk and Bblk in blocked layout described above.
 // C is standard row-major M x N.
 __global__ void blocked_gemm_kernel(
-    const float* __restrict__ Ablk,  // [BM][BK][TB_M][TB_K] flattened
-    const float* __restrict__ Bblk,  // [BK][BN][TB_K][TB_N] flattened
-    float* __restrict__ C,           // row-major M x N
-    int M_, int N_, int K_)
+    const float* Ablk,
+    const float* Bblk,
+    float* C,
+    int M_, int N_, int K_,
+    int TB_M_, int TB_N_, int TB_K_,
+    int BM_, int BN_, int BK_)
 {
     // Which block of C this is:
     const int bm = blockIdx.x; // 0..BM-1
@@ -85,44 +100,58 @@ __global__ void blocked_gemm_kernel(
 
     // each thread computes one output element within TB_M x TB_N
     const int tid = threadIdx.x;
-    const int tm = tid / TB_N; // 0..TB_M-1
-    const int tn = tid % TB_N; // 0..TB_N-1
+    const int tm = tid / TB_N_; // 0..TB_M-1
+    const int tn = tid % TB_N_; // 0..TB_N-1
 
-    if (tm >= TB_M || tn >= TB_N) return;
+    if (tm >= TB_M_ || tn >= TB_N_) return;
 
     // Shared memory for tiles
     extern __shared__ float smem[]; // size = TB_M*TB_K + TB_K*TB_N
     float* sA = smem;                       // TB_M * TB_K
-    float* sB = smem + TB_M * TB_K;        // TB_K * TB_N
+    float* sB = smem + TB_M_ * TB_K_;        // TB_K * TB_N
 
     float accum = 0.0f;
 
     // Loop over bk blocks
-    for (int bk = 0; bk < BK; ++bk) {
+    for (int bk = 0; bk < BK_; ++bk) {
+
         // Load A block [TB_M x TB_K] from global Ablk to sA
         // global address: Ablk[ ((bm * BK) + bk) * (TB_M*TB_K) + i*TB_K + j ]
-        size_t a_block_base = (size_t)((bm * BK) + bk) * (TB_M * TB_K);
-        size_t b_block_base = (size_t)((bk * BN) + bn) * (TB_K * TB_N);
+        size_t a_block_base = (size_t)((bm * BK_) + bk) * (TB_M_ * TB_K_);
+        size_t b_block_base = (size_t)((bk * BN_) + bn) * (TB_K_ * TB_N_);
 
-        // cooperative load
-        for (int idx = tid; idx < TB_M * TB_K; idx += blockDim.x) {
-            int i = idx / TB_K;
-            int j = idx % TB_K;
-            sA[i * TB_K + j] = Ablk[a_block_base + i * TB_K + j];
+        // 1. Cast Shared Memory pointers to float4
+        float4* sA_vec = reinterpret_cast<float4*>(sA);
+        float4* sB_vec = reinterpret_cast<float4*>(sB);
+
+        // 2. Cast Global Memory pointers to float4
+        // Note: We compute the base address in 'float' offset first, then cast to float4*
+        const float4* Ablk_vec = reinterpret_cast<const float4*>(&Ablk[a_block_base]);
+        const float4* Bblk_vec = reinterpret_cast<const float4*>(&Bblk[b_block_base]);
+
+        // 3. Load A (Vectorized)
+        // We assume TB_K is a multiple of 4.
+        int num_vec_A = (TB_M_ * TB_K_) / 4; 
+        
+        for (int idx = tid; idx < num_vec_A; idx += blockDim.x) {
+            // The copy is now a single instruction moving 128 bits
+            sA_vec[idx] = Ablk_vec[idx];
         }
 
-        for (int idx = tid; idx < TB_K * TB_N; idx += blockDim.x) {
-            int i = idx / TB_N;
-            int j = idx % TB_N;
-            sB[i * TB_N + j] = Bblk[b_block_base + i * TB_N + j];
+        // 4. Load B (Vectorized)
+        // We assume TB_N is a multiple of 4.
+        int num_vec_B = (TB_K_ * TB_N_) / 4;
+
+        for (int idx = tid; idx < num_vec_B; idx += blockDim.x) {
+            sB_vec[idx] = Bblk_vec[idx];
         }
 
         __syncthreads();
 
         // compute partial product for this thread's (tm,tn)
-        for (int kk = 0; kk < TB_K; ++kk) {
-            float a = sA[tm * TB_K + kk];
-            float b = sB[kk * TB_N + tn];
+        for (int kk = 0; kk < TB_K_; ++kk) {
+            float a = sA[tm * TB_K_ + kk];
+            float b = sB[kk * TB_N_ + tn];
             accum += a * b;
         }
 
@@ -130,8 +159,8 @@ __global__ void blocked_gemm_kernel(
     }
 
     // Write to C
-    int row = bm * TB_M + tm;
-    int col = bn * TB_N + tn;
+    int row = bm * TB_M_ + tm;
+    int col = bn * TB_N_ + tn;
     if (row < M_ && col < N_) {
         C[row * N_ + col] = accum;
     }
@@ -150,8 +179,25 @@ void cpu_gemm_naive(const float* A, const float* B, float* C) {
     }
 }
 
-int main() {
-    std::cout << "Blocked GEMM end-to-end example\n";
+int main(int argc, char** argv) {
+    if (argc == 7) {
+        M    = std::atoi(argv[1]);
+        N    = std::atoi(argv[2]);
+        K    = std::atoi(argv[3]);
+        TB_M = std::atoi(argv[4]);
+        TB_N = std::atoi(argv[5]);
+        TB_K = std::atoi(argv[6]);
+    } else {
+        std::cout << "Usage: ./gemm M N K TB_M TB_N TB_K\n";
+        std::cout << "Using default values.\n";
+    }
+
+    // Derived sizes
+    BM = M / TB_M;
+    BN = N / TB_N;
+    BK = K / TB_K;
+
+    std::cout << "Blocked GEMM (vec) end-to-end example\n";
     std::cout << "M=" << M << " K=" << K << " N=" << N << "\n";
     std::cout << "TB_M=" << TB_M << " TB_N=" << TB_N << " TB_K=" << TB_K << "\n";
 
@@ -200,13 +246,14 @@ int main() {
 
     std::cout << "Launching kernel grid(" << BM << "," << BN << ") block(" << (TB_M*TB_N) << ") smem=" << smem_bytes << "\n";
 
-    blocked_gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K);
+    blocked_gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
     cudaCheck(cudaGetLastError());
     cudaCheck(cudaDeviceSynchronize());
 
     // Copy result back
     cudaCheck(cudaMemcpy(hC, dC, sizeC * sizeof(float), cudaMemcpyDeviceToHost));
 
+    #if CPU_DEBUG
     // CPU reference
     cpu_gemm_naive(hA, hB, hC_ref);
 
@@ -229,7 +276,10 @@ int main() {
         std::cout << "FAIL: difference exceeds eps=" << eps << "\n";
     }
 
+    #endif
 
+
+    #if BENCHMARK
     // --------------------------
     // Timing (CUDA events)
     // --------------------------
@@ -241,8 +291,8 @@ int main() {
     // -----------------------------
     // Warm-up (5 iterations)
     // -----------------------------
-    for (int i = 0; i < 5; i++) {
-        blocked_gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K);
+    for (int i = 0; i < WARMUP; i++) {
+        blocked_gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
     }
     cudaDeviceSynchronize();
 
@@ -251,10 +301,10 @@ int main() {
     // -----------------------------
     float total_ms = 0.f, min_ms = 1e9, max_ms = 0.f;
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < ITER; i++) {
         cudaEventRecord(start);
 
-        blocked_gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K);
+        blocked_gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
         
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
@@ -267,7 +317,7 @@ int main() {
         max_ms = std::max(max_ms, ms);
     }
 
-    float avg_ms = total_ms / 10.0f;
+    float avg_ms = total_ms / ITER;
 
     std::cout << "---- Benchmark ----\n";
     std::cout << "Avg time: " << avg_ms << " ms\n";
@@ -277,6 +327,7 @@ int main() {
     double gflops = (2.0 * M * N * K) / (avg_ms/1000.0) / 1e9;
     std::cout << "Achieved: " << gflops << " GFLOP/s\n";
 
+    #endif
 
     // Cleanup
     free(hA); free(hB); free(hC); free(hC_ref);

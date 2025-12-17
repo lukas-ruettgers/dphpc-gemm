@@ -28,7 +28,7 @@ add_executable(wmma_gemm src/wmma_gemm.cu)
 target_link_libraries(wmma_gemm PRIVATE utils)
 
 # WMMA optimized benchmark
-add_executable(wmma_opti_gemm_32 src/cudaTensorCoreGemm.cu)
+add_executable(wmma_opti_gemm src/cudaTensorCoreGemm.cu)
 # target_link_libraries(wmma_gemm PRIVATE utils)
 
 # CUTLASS tunable benchmark

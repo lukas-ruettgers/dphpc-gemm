@@ -81,7 +81,7 @@
 // improve the performance of the computations on GPU.
 // Note that you need a GPU that can have more than 64 Kb of shared memory
 // per multiprocessor.
-#define SHARED_MEMORY_LIMIT_64K 1
+#define SHARED_MEMORY_LIMIT_64K 0
 #endif
 
 // GPU configuration.
@@ -100,9 +100,9 @@
 
 // GEMM configuration.
 
-#define M_TILES 512
-#define N_TILES 512
-#define K_TILES 32
+#define M_TILES 256
+#define N_TILES 256
+#define K_TILES 256
 
 #define M_GLOBAL (M * M_TILES)
 #define N_GLOBAL (N * N_TILES)
@@ -554,7 +554,7 @@ int main(int argc, char **argv)
 
         checkCudaErrors(cudaFuncSetAttribute(compute_gemm, cudaFuncAttributeMaxDynamicSharedMemorySize, SHMEM_SZ));
         //Warmup
-        for (int i = 0;i<3;i++){
+        for (int i = 0;i<5;i++){
             checkKernelErrors(
             (compute_gemm<<<deviceProp.multiProcessorCount, THREADS_PER_BLOCK, SHMEM_SZ>>>(A, B, C, D, alpha, beta)));
         }

@@ -1,2 +1,5 @@
 build/*
 venv/*
+output/*
+prof_output/*
+build_prof/*
