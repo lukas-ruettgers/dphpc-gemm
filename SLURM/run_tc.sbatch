@@ -3,8 +3,8 @@
 #SBATCH --time=00:59
 #SBATCH --account=dphpc
 #SBATCH --gpus=5060ti:1
-#SBATCH --output=/home/shgoel/dphpc/cutlass/benchmark_gemm/output/%j_blocked.log
-#SBATCH --error=/home/shgoel/dphpc/cutlass/benchmark_gemm/output/%j_blocked.err
+#SBATCH --output=/home/shgoel/dphpc/cutlass/benchmark_gemm/output/%j_tc.log
+#SBATCH --error=/home/shgoel/dphpc/cutlass/benchmark_gemm/output/%j_tc.err
 
 . /etc/profile.d/modules.sh
 module purge
@@ -29,8 +29,8 @@ nvcc -O3 -lineinfo \
      -I"/home/shgoel/dphpc/cutlass/benchmark_gemm/include" \
      -I"$CUDA_HOME/include" \
      -L"$CUDA_HOME/lib64" -lnvToolsExt \
-     /home/shgoel/dphpc/cutlass/benchmark_gemm/src/blocked_gemm_vec.cu \
-     -o ./blocked_gemm.cu
+     /home/shgoel/dphpc/cutlass/benchmark_gemm/src/gemm_tc.cu \
+     -o ./gemm_tc
 
-./blocked_gemm.cu
+./gemm_tc
 

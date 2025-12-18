@@ -13,12 +13,12 @@
 
 #ifndef BENCHMARK
 // Set this to 1 to verify the correctness of the GPU-computed matrix.
-#define BENCHMARK 1
+#define BENCHMARK 0
 #endif
 
 #if BENCHMARK
 float WARMUP=3;
-float ITER=10;
+float ITER=50;
 #endif
 
 // simple CUDA error-check macro
@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
     BN = N / TB_N;
     BK = K / TB_K;
 
-    std::cout << "Blocked GEMM (vec) end-to-end example\n";
+    std::cout << "\n\nBlocked GEMM (vec) end-to-end example\n";
     std::cout << "M=" << M << " K=" << K << " N=" << N << "\n";
     std::cout << "TB_M=" << TB_M << " TB_N=" << TB_N << " TB_K=" << TB_K << "\n";
 
@@ -299,33 +299,66 @@ int main(int argc, char** argv) {
     // -----------------------------
     // Benchmark (10 runs)
     // -----------------------------
-    float total_ms = 0.f, min_ms = 1e9, max_ms = 0.f;
+    std::vector<float> times_ms;
+    times_ms.reserve(ITER);
+
+    float total_ms = 0.f, min_ms = 1e9f, max_ms = 0.f;
 
     for (int i = 0; i < ITER; i++) {
         cudaEventRecord(start);
 
-        blocked_gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
-        
+        blocked_gemm_kernel<<<grid, block, smem_bytes>>>(
+            dAblk, dBblk, dC,
+            M, N, K,
+            TB_M, TB_N, TB_K,
+            BM, BN, BK
+        );
+
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
 
-        float ms = 0;
+        float ms = 0.f;
         cudaEventElapsedTime(&ms, start, stop);
+
+        times_ms.push_back(ms);
 
         total_ms += ms;
         min_ms = std::min(min_ms, ms);
         max_ms = std::max(max_ms, ms);
     }
 
-    float avg_ms = total_ms / ITER;
+    float mean_ms = total_ms / ITER;
 
+    // ---- Compute sample standard deviation ----
+    float var_ms = 0.f;
+    for (float t : times_ms) {
+        float diff = t - mean_ms;
+        var_ms += diff * diff;
+    }
+    var_ms /= (ITER - 1);              // sample variance
+    float std_ms = std::sqrt(var_ms);
+
+    // ---- 95% confidence interval for time ----
+    float stderr_ms = std_ms / std::sqrt((float)ITER);
+    float ci95_ms = 1.96f * stderr_ms;
+
+    // ---- GFLOP/s ----
+    double flops = 2.0 * M * N * K;
+    double gflops = flops / (mean_ms / 1000.0) / 1e9;
+
+    // ---- Propagate CI to GFLOP/s ----
+    double gflops_ci95 = gflops * (ci95_ms / mean_ms);
+
+    // ---- Output ----
     std::cout << "---- Benchmark ----\n";
-    std::cout << "Avg time: " << avg_ms << " ms\n";
-    std::cout << "Min time: " << min_ms << " ms\n";
-    std::cout << "Max time: " << max_ms << " ms\n";
+    std::cout << "Mean time: " << mean_ms << " ms\n";
+    std::cout << "Min time:  " << min_ms << " ms\n";
+    std::cout << "Max time:  " << max_ms << " ms\n";
+    std::cout << "Stddev:    " << std_ms << " ms\n";
 
-    double gflops = (2.0 * M * N * K) / (avg_ms/1000.0) / 1e9;
-    std::cout << "Achieved: " << gflops << " GFLOP/s\n";
+    std::cout << "Achieved:  " << gflops
+            << " ± " << gflops_ci95
+            << " GFLOP/s (95% CI)\n";
 
     #endif
 

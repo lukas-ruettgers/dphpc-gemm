@@ -29,8 +29,8 @@ nvcc -O3 -lineinfo \
      -I"/home/shgoel/dphpc/cutlass/benchmark_gemm/include" \
      -I"$CUDA_HOME/include" \
      -L"$CUDA_HOME/lib64" -lnvToolsExt \
-     /home/shgoel/dphpc/cutlass/benchmark_gemm/src/non_blocked_gemm.cu \
-     -o ./non_blocked_gemm.cu
+     /home/shgoel/dphpc/cutlass/benchmark_gemm/src/non_blocked_gemm_vec.cu \
+     -o ./non_blocked_gemm
 
-./non_blocked_gemm.cu
+./non_blocked_gemm
 
