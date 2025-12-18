@@ -11,13 +11,18 @@ import time
 
 
 KERNELS_PER_RUN = 1 # These many consecutive kernels are considered part of the same run.
-WARMUP_RUNS = 0 # Skips warmup runs from the CSV.
+WARMUP_RUNS = 3 # Skips warmup runs from the CSV.
 
 # Cmdline arguments to pass to the program (if --bin option chosen).
 # The program is executed once per item in the list.
 PROGRAM_ARGS = [
-    '--M 1024 --N 512 --K 256 --threadblock 32' # Example args,
+    '--M 8192 --N 8192 --K 2048 --threadblock 64x128x64 --warp 32x64x64 --inst 16x8x16 --stages 4',
+    '--M 8192 --N 8192 --K 64 --threadblock 64x256x32 --warp 32x64x32 --inst 16x8x16 --stages 4',
+    '--M 8192 --N 8192 --K 128 --threadblock 64x256x32 --warp 32x64x32 --inst 16x8x16 --stages 4',
+    '--M 8192 --N 8192 --K 256 --threadblock 128x64x32 --warp 64x32x32 --inst 16x8x16 --stages 4',
+    '--M 8192 --N 8192 --K 512 --threadblock 128x64x32 --warp 64x32x32 --inst 16x8x16 --stages 4',
 ]
+
 
 DEFAULT_NCU_REP = 'ncu_benchmark_output.ncu-rep' # Must match ncu_benchmark.sbatch.
 DEFAULT_CSV = 'ncu_benchmark_output.csv'
@@ -87,11 +92,15 @@ class RunData:
 class Data(RunData):
     """Data over an entire set of runs (using median)."""
 
+    name: str
+
     peak_performance: float # GFLOP/s
     peak_bandwidth: float # GB/s
     arithmetic_intensity: float # FLOP/byte
 
-    def __init__(self, dfs: list[pd.DataFrame], kernels_per_run: int, warmup_runs: int) -> None:
+    def __init__(self, name: str, dfs: list[pd.DataFrame], kernels_per_run: int, warmup_runs: int) -> None:
+        self.name = name
+
         # Validate grouping parameters.
         if len(dfs) % kernels_per_run != 0:
             raise Exception(f'Kernels per run ({kernels_per_run}) does not divide number of run entries in CSV ({len(dfs)})')
@@ -124,7 +133,8 @@ class Data(RunData):
 
     
     def __str__(self) -> str:
-        result = f'Peak Performance: {self.peak_performance} GFLOP/s\n'
+        result = f'Benchmark Name: {self.name}\n'
+        result += f'Peak Performance: {self.peak_performance} GFLOP/s\n'
         result += f'Peak Bandwidth: {self.peak_bandwidth} GB/s\n'
         result += f'Median Performance: {self.performance} GFLOP/s\n'
         result += f'Median Bandwidth: {self.bandwidth} GB/s\n'
@@ -142,7 +152,7 @@ def split_dataframe_by_id(df: pd.DataFrame) -> list[pd.DataFrame]:
     return chunks
 
 
-def parse_ncu_csv(csv_file: str | TextIOWrapper, kernels_per_run: int, warmup_runs: int) -> Data:
+def parse_ncu_csv(csv_file: str | TextIOWrapper, name: str, kernels_per_run: int, warmup_runs: int) -> Data:
     """Parses NCU CSV file and returns a list of datapoints."""
     try:
         df = pd.read_csv(csv_file, quoting=csv.QUOTE_ALL, usecols=[
@@ -156,11 +166,13 @@ def parse_ncu_csv(csv_file: str | TextIOWrapper, kernels_per_run: int, warmup_ru
         raise Exception('CSV file is empty: No kernel invocations occured')
 
     dfs = split_dataframe_by_id(df)
-    data = Data(dfs, kernels_per_run, warmup_runs)
+    data = Data(name, dfs, kernels_per_run, warmup_runs)
     return data
 
 
-def plot_roofline(data: Data, title: str) -> None:
+def plot_roofline(data_list: list[Data], title: str) -> None:
+    print(f'data points = {len( data_list ) }')
+
     plt.figure(figsize=(10, 6), dpi=200)
     plt.title(title, fontweight='bold', pad=20)
     
@@ -172,18 +184,19 @@ def plot_roofline(data: Data, title: str) -> None:
     # ridge_point = peak_compute / peak_bandwidth
     
     # Generate roofline curve
-    ai_range = np.logspace(-2, 2, 500) # Arithmetic intensity range
-    performance_roofline = np.minimum(data.peak_bandwidth * ai_range, data.peak_performance)
+    ai_range = np.logspace(-2, 6, 500) # Arithmetic intensity range
+    performance_roofline = np.minimum(data_list[0].peak_bandwidth * ai_range, data_list[0].peak_performance) # This remains same for all data points.
     
     # Plot roofline boundaries
     plt.plot(ai_range, performance_roofline, 'k-', linewidth=2, label='Roofline')
-    plt.axhline(y=data.peak_performance, color='#707070', linestyle='--', alpha=0.7)
+    plt.axhline(y=data_list[0].peak_performance, color='#707070', linestyle='--', alpha=0.7)
     
     # Plot data points
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
-    
-    color = colors[1]
-    plt.plot(data.arithmetic_intensity, data.performance, 'o', markersize=8, label='Kernel', color=color)
+    # colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+    # plt.plot(data.arithmetic_intensity, data.performance, 'o', markersize=8, label='Kernel', color=color)
+
+    for data in data_list:
+        plt.plot(data.arithmetic_intensity, data.performance, 'o', markersize=8, label=data.name)
     
     # Labels and styling
     plt.xlabel('Arithmetic Intensity (FLOP/byte)')
@@ -192,14 +205,14 @@ def plot_roofline(data: Data, title: str) -> None:
     plt.gca().set_facecolor('#f8f8f8')
     
     # Add peak performance info on the side
-    peak_info = f'Peak Performance: {data.peak_performance:.0f} GFLOP/s\nPeak Bandwidth: {data.peak_bandwidth:.0f} GB/s'
-    peak_info = f'{peak_info}\nMedian Performance: {data.performance:.0f} GFLOP/s\nMedian Bandwidth: {data.bandwidth:.2f} GB/s'
-    peak_info = f'{peak_info}\nArithmetic Intensity: {data.arithmetic_intensity:.2f} FLOP/byte'
+    # peak_info = f'Peak Performance: {data.peak_performance:.0f} GFLOP/s\nPeak Bandwidth: {data.peak_bandwidth:.0f} GB/s'
+    # peak_info = f'{peak_info}\nMedian Performance: {data.performance:.0f} GFLOP/s\nMedian Bandwidth: {data.bandwidth:.2f} GB/s'
+    # peak_info = f'{peak_info}\nArithmetic Intensity: {data.arithmetic_intensity:.2f} FLOP/byte'
 
-    plt.annotate(peak_info, 
-                xy=(1.02, 0.5), xycoords='axes fraction',
-                bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.9),
-                fontsize=10, ha='left', va='top')
+    # plt.annotate(peak_info, 
+    #             xy=(1.02, 0.5), xycoords='axes fraction',
+    #             bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.9),
+    #             fontsize=10, ha='left', va='top')
     
     # Legend
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -285,19 +298,24 @@ def main():
     
     if mode == ScriptMode.BIN:
         assert bin is not None
+
+        data_list: list[Data] = []
         
+        print(f'Number of executions: {len(PROGRAM_ARGS)}')
         for i, args in enumerate(PROGRAM_ARGS):
             print(f"Running benchmark {i} on binary: {bin}")
             ncu_rep = run_benchmark(bin)
             print(f"Generating CSV from NCU report: {ncu_rep}")
             csv = generate_csv(ncu_rep)
             print(f"Parsing CSV file: {csv}")
-            data = parse_ncu_csv(csv, kernels_per_run, warmup_runs)
-            print(f'BENCHMARK `{args}`:')
+            data = parse_ncu_csv(csv, args, kernels_per_run, warmup_runs)
             print(data)
             print()
 
-        plot_roofline(data, 'Roofline Analysis')
+            data_list.append(data)
+
+        plot_roofline(data_list, 'Roofline Analysis')
+        return
 
     if mode == ScriptMode.NCU_REP:
         assert ncu_rep is not None
@@ -306,10 +324,10 @@ def main():
 
     assert csv is not None
     print(f"Parsing CSV file: {csv}")
-    data = parse_ncu_csv(csv, kernels_per_run, warmup_runs)
+    data = parse_ncu_csv(csv, 'Kernel', kernels_per_run, warmup_runs)
     print(data)
     
-    plot_roofline(data, 'Roofline Analysis')
+    plot_roofline([data], 'Roofline Analysis')
 
 
 if __name__ == "__main__":
