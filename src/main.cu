@@ -6,10 +6,6 @@
 #include <iostream>
 #include "kernels.hpp"
 
-#if GEMM_BENCHMARK
-int WARMUP=3;
-int ITER=50;
-#endif
 
 // CPU naive gemm for verification: C = A * B
 static void cpu_gemm_naive(const float* A, const float* B, float* C, size_t M, size_t N, size_t K);
@@ -109,10 +105,10 @@ int main(int argc, char** argv) {
     cudaEventCreate(&stop);
 
     // -----------------------------
-    // Warm-up (5 iterations)
+    // Warm-up
     // -----------------------------
-    for (int i = 0; i < WARMUP; i++) {
-        gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
+    for (int i = 0; i < WARMUP_RUNS; i++) {
+        launch_kernel(kargs);
     }
     cudaDeviceSynchronize();
 
@@ -121,11 +117,11 @@ int main(int argc, char** argv) {
     // -----------------------------
     float total_ms = 0.f, min_ms = 1e9, max_ms = 0.f;
 
-    std::cout << "-----BEGIN\n";
-    for (int i = 0; i < ITER; i++) {
+    // std::cout << "-----BEGIN\n";
+    for (int i = 0; i < BENCHMARK_RUNS; i++) {
         cudaEventRecord(start);
 
-        gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
+        launch_kernel(kargs);
         
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
@@ -137,19 +133,21 @@ int main(int argc, char** argv) {
         min_ms = std::min(min_ms, ms);
         max_ms = std::max(max_ms, ms);
 
-        std::cout << ms << "\n";
+        // std::cout << ms << "\n";
     }
-    std::cout << "-----END\n";
+    // std::cout << "-----END\n";
 
-    float avg_ms = total_ms / ITER;
+    float avg_ms = total_ms / BENCHMARK_RUNS;
 
-    std::cout << "---- Benchmark ----\n";
-    std::cout << "Avg time: " << avg_ms << " ms\n";
-    std::cout << "Min time: " << min_ms << " ms\n";
-    std::cout << "Max time: " << max_ms << " ms\n";
+    printf("\n---- Benchmark ----\n");
+    printf("Avg time: %f ms\n", avg_ms);
+    printf("Min time: %f ms\n", min_ms);
+    printf("Max time: %f ms\n", max_ms);
 
-    double gflops = (2.0 * M * N * K) / (avg_ms/1000.0) / 1e9;
-    std::cout << "Achieved: " << gflops << " GFLOP/s\n";
+    double total_flops = 2.0 * M * N * K;
+
+    double perf_tflops = total_flops / (avg_ms * 1e9);
+    printf("Performance: %f TFLOP/s\n", perf_tflops);
 
     #endif
 

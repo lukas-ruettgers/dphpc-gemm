@@ -5,11 +5,14 @@
 #include <cstdlib>
 
 //============================
-// Flags
+// Macros
 //============================
 
 #define GEMM_VERIFY 1
-#define GEMM_BENCHMARK 0
+#define GEMM_BENCHMARK 1
+
+#define WARMUP_RUNS 2
+#define BENCHMARK_RUNS 5
 
 //============================
 // Kernels
