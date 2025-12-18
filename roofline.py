@@ -16,11 +16,13 @@ WARMUP_RUNS = 3 # Skips warmup runs from the CSV.
 # Cmdline arguments to pass to the program (if --bin option chosen).
 # The program is executed once per item in the list.
 PROGRAM_ARGS = [
-    '--M 8192 --N 8192 --K 2048 --threadblock 64x128x64 --warp 32x64x64 --inst 16x8x16 --stages 4',
-    '--M 8192 --N 8192 --K 64 --threadblock 64x256x32 --warp 32x64x32 --inst 16x8x16 --stages 4',
-    '--M 8192 --N 8192 --K 128 --threadblock 64x256x32 --warp 32x64x32 --inst 16x8x16 --stages 4',
-    '--M 8192 --N 8192 --K 256 --threadblock 128x64x32 --warp 64x32x32 --inst 16x8x16 --stages 4',
-    '--M 8192 --N 8192 --K 512 --threadblock 128x64x32 --warp 64x32x32 --inst 16x8x16 --stages 4',
+    '4096 4096 128 16 16 16',
+    '4096 4096 256 16 16 16',
+    '4096 4096 512 16 16 16',
+    '4096 4096 1024 16 16 16',
+    '4096 4096 2048 16 16 16',
+    '4096 4096 4096 16 16 16',
+    '4096 4096 8192 16 16 16'
 ]
 
 

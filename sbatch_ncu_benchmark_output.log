@@ -1,8 +1,12 @@
-==PROF== Connected to process 370352 (/home/nwadekar/dphpc/dphpc-gemm/cutlass_gemm_tunable2)
-==PROF== Profiling "Kernel" - 0: 0%....50%....100% - 21 passes
-==PROF== Profiling "Kernel" - 1: 0%....50%....100% - 21 passes
-==PROF== Profiling "Kernel" - 2: 0%....50%....100% - 21 passes
-==PROF== Profiling "Kernel" - 3: 0%....50%....100% - 21 passes
-Kernel: TB=128x256x32 WP=64x64x32 INST=8x8x4 CUTLASS: M=4096 N=4096 K=32  Time=1165.73 ms  Perf=0.000921087 TFLOPs
-==PROF== Disconnected from process 370352
-==PROF== Report: /home/nwadekar/dphpc/dphpc-gemm/ncu_benchmark_output.ncu-rep
+==PROF== Connected to process 1925147 (/home/shgoel/dphpc/cutlass/benchmark_gemm/blocked_gemm)
+==PROF== Profiling "blocked_gemm_kernel" - 0: 0%....50%....100% - 21 passes
+Usage: ./gemm M N K TB_M TB_N TB_K
+Using default values.
+
+
+Blocked GEMM (vec) end-to-end example
+M=1024 K=1024 N=1024
+TB_M=16 TB_N=16 TB_K=16
+Launching kernel grid(64,64) block(256) smem=2048
+==PROF== Disconnected from process 1925147
+==PROF== Report: /home/shgoel/dphpc/cutlass/benchmark_gemm/ncu_benchmark_output.ncu-rep
