@@ -11,7 +11,7 @@ import time
 
 
 KERNELS_PER_RUN = 1 # These many consecutive kernels are considered part of the same run.
-WARMUP_RUNS = 3 # Skips warmup runs from the CSV.
+WARMUP_RUNS = 4 # Skips warmup runs from the CSV.
 
 # Cmdline arguments to pass to the program (if --bin option chosen).
 # The program is executed once per item in the list.

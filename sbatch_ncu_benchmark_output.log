@@ -1,5 +1,58 @@
-==PROF== Connected to process 1925147 (/home/shgoel/dphpc/cutlass/benchmark_gemm/blocked_gemm)
+==PROF== Connected to process 1925975 (/home/shgoel/dphpc/cutlass/benchmark_gemm/blocked_gemm)
 ==PROF== Profiling "blocked_gemm_kernel" - 0: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 1: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 2: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 3: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 4: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 5: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 6: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 7: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 8: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 9: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 10: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 11: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 12: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 13: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 14: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 15: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 16: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 17: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 18: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 19: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 20: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 21: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 22: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 23: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 24: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 25: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 26: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 27: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 28: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 29: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 30: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 31: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 32: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 33: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 34: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 35: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 36: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 37: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 38: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 39: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 40: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 41: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 42: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 43: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 44: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 45: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 46: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 47: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 48: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 49: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 50: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 51: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 52: 0%....50%....100% - 21 passes
+==PROF== Profiling "blocked_gemm_kernel" - 53: 0%....50%....100% - 21 passes
 Usage: ./gemm M N K TB_M TB_N TB_K
 Using default values.
 
@@ -8,5 +61,11 @@ Blocked GEMM (vec) end-to-end example
 M=1024 K=1024 N=1024
 TB_M=16 TB_N=16 TB_K=16
 Launching kernel grid(64,64) block(256) smem=2048
-==PROF== Disconnected from process 1925147
+---- Benchmark ----
+Mean time: 959.045 ms
+Min time:  923.515 ms
+Max time:  1101.77 ms
+Stddev:    23.2009 ms
+Achieved:  2.23919 ± 0.0150151 GFLOP/s (95% CI)
+==PROF== Disconnected from process 1925975
 ==PROF== Report: /home/shgoel/dphpc/cutlass/benchmark_gemm/ncu_benchmark_output.ncu-rep
