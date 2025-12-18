@@ -6,84 +6,21 @@
 #include <iostream>
 #include "kernels.hpp"
 
-#ifndef CPU_DEBUG
-// Set this to 1 to verify the correctness of the GPU-computed matrix.
-#define CPU_DEBUG 1
-#endif
-
-#ifndef BENCHMARK
-// Set this to 1 to verify the correctness of the GPU-computed matrix.
-#define BENCHMARK 0
-#endif
-
-#if BENCHMARK
+#if GEMM_BENCHMARK
 int WARMUP=3;
 int ITER=50;
 #endif
 
-
-// // Tile sizes (runtime)
-// int TB_M = 16;
-// int TB_N = 16;
-// int TB_K = 16;
-
-// // Matrix sizes (runtime)
-// int M = 1024;
-// int K = 1024;
-// int N = 1024;
-
-// // Derived block counts (runtime)
-// int BM, BK, BN;
-
-
-
-
 // CPU naive gemm for verification: C = A * B
-void cpu_gemm_naive(const float* A, const float* B, float* C, size_t M, size_t N, size_t K) {
-    for (int i = 0; i < M; ++i) {
-        for (int j = 0; j < N; ++j) {
-            float s = 0.0f;
-            for (int k = 0; k < K; ++k) {
-                s += A[i * K + k] * B[k * N + j];
-            }
-            C[i * N + j] = s;
-        }
-    }
-}
-
-static KernelArgs parse_args(int argc, char** argv) {
-    if (argc != 7) {
-        printf("Usage: ./gemm M N K TB_M TB_N TB_K\n");
-        printf("Exiting....\n");
-        exit(1);
-    }
-
-    size_t M = (size_t) atoi(argv[1]);
-    size_t N = (size_t) atoi(argv[2]);
-    size_t K = (size_t) atoi(argv[3]);
-    size_t TB_M = (size_t) atoi(argv[4]);
-    size_t TB_N = (size_t) atoi(argv[5]);
-    size_t TB_K = (size_t) atoi(argv[6]);
-
-    return KernelArgs {
-        .M = M,
-        .N = N,
-        .K = K,
-        .TB_M = TB_M,
-        .TB_N = TB_N,
-        .TB_K = TB_K,
-        .blocks_M = M / TB_M,
-        .blocks_N = N / TB_N,
-        .blocks_K = K / TB_K,
-    };
-}
+static void cpu_gemm_naive(const float* A, const float* B, float* C, size_t M, size_t N, size_t K);
+static KernelArgs parse_args(int argc, char** argv);
 
 
 int main(int argc, char** argv) {
     KernelArgs kargs = parse_args(argc, argv);
     UNPACK_KERNEL_ARGS(kargs);
 
-    printf("Starting GEMM framework...\n");
+    printf("\nStarting GEMM framework...\n");
     printf("(M, N, K) = (%lu, %lu, %lu)\n", M, N, K);
     printf("(TB_M, TB_N, TB_K) = (%lu, %lu, %lu)\n", TB_M, TB_N, TB_K);
     printf("(blocks_M, blocks_N, blocks_K) = (%lu, %lu, %lu)\n", blocks_M, blocks_N, blocks_K);
@@ -110,57 +47,59 @@ int main(int argc, char** argv) {
     cudaCheck(cudaMalloc(&devB, sizeB * sizeof(float)));
     cudaCheck(cudaMalloc(&devC, sizeC * sizeof(float)));
 
+    // Set device pointers in kernel args.
+    kargs.A = devA;
+    kargs.B = devB;
+    kargs.C = devC;
+
     // Copy blocked tensors to device
     cudaCheck(cudaMemcpy(devA, hostA, sizeA * sizeof(float), cudaMemcpyHostToDevice));
     cudaCheck(cudaMemcpy(devB, hostB, sizeB * sizeof(float), cudaMemcpyHostToDevice));
     cudaCheck(cudaMemset(devC, 0, sizeC * sizeof(float)));
 
     // Launch kernel
-    dim3 grid(blocks_M, blocks_N); // 2D grid of blocks_M x blocks_N blocks
-    dim3 block(TB_M * TB_N); // 1D block of TB_M * TB_N threads
+    // dim3 grid(blocks_M, blocks_N); // 2D grid of blocks_M x blocks_N blocks
+    // dim3 block(TB_M, TB_N); // 2D block of TB_M x TB_N threads
     // size_t smem_bytes = (TB_M * TB_K + TB_K * TB_N) * sizeof(float);
-
-    // std::cout << "Launching kernel grid(" << BM << "," << BN << ") block(" << (TB_M*TB_N) << ") smem=" << smem_bytes << "\n";
-
-    printf("Launching kernel...\n");
-
     // gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
-    kernel_v00_basic<<<grid, block>>>(kargs);
+
+    printf("\nLaunching kernel...\n");
+    launch_kernel(kargs);
+
     cudaCheck(cudaGetLastError());
     cudaCheck(cudaDeviceSynchronize());
 
-
-
     // Copy result back
-    // cudaCheck(cudaMemcpy(hC, dC, sizeC * sizeof(float), cudaMemcpyDeviceToHost));
+    cudaCheck(cudaMemcpy(hostC, devC, sizeC * sizeof(float), cudaMemcpyDeviceToHost));
 
-    // #if CPU_DEBUG
-    // // CPU reference
-    // cpu_gemm_naive(hA, hB, hC_ref);
+    #if GEMM_VERIFY
+    // CPU reference
+    cpu_gemm_naive(hostA, hostB, hostC_ref, M, N, K);
 
-    // // Verify
-    // double max_abs_diff = 0.0;
-    // double sum_abs_diff = 0.0;
-    // for (size_t i = 0; i < sizeC; ++i) {
-    //     double d = fabs((double)hC_ref[i] - (double)hC[i]);
-    //     sum_abs_diff += d;
-    //     if (d > max_abs_diff) max_abs_diff = d;
-    // }
+    // Verify
+    double max_abs_diff = 0.0;
+    double sum_abs_diff = 0.0;
+    for (size_t i = 0; i < sizeC; ++i) {
+        double d = fabs((double) hostC_ref[i] - (double) hostC[i]);
+        sum_abs_diff += d;
+        if (d > max_abs_diff) max_abs_diff = d;
+    }
 
-    // std::cout << "Max absolute difference: " << max_abs_diff << "\n";
-    // std::cout << "Sum absolute difference: " << sum_abs_diff << "\n";
+    printf("\nMax absolute difference: %f\n", max_abs_diff);
+    printf("Sum absolute difference: %f\n", sum_abs_diff);
 
-    // const double eps = 1e-3; // tolerance (floating rounding)
-    // if (max_abs_diff < eps) {
-    //     std::cout << "PASS: GPU result matches CPU reference within eps=" << eps << "\n";
-    // } else {
-    //     std::cout << "FAIL: difference exceeds eps=" << eps << "\n";
-    // }
+    const double eps = 1e-3; // tolerance (floating rounding)
+    if (max_abs_diff < eps) {
+        printf("\x1b[32mPASS\x1b[0m: GPU result matches CPU reference within eps = %f\n", eps);
+    } else {
+        printf("\x1b[31mFAIL\x1b[0m: difference exceeds eps = %f\n", eps);
+        exit(1);
+    }
 
-    // #endif
+    #endif
 
 
-    #if BENCHMARK
+    #if GEMM_BENCHMARK
     // --------------------------
     // Timing (CUDA events)
     // --------------------------
@@ -222,3 +161,50 @@ int main(int argc, char** argv) {
 }
 
 
+// CPU naive gemm for verification: C = A * B
+static void cpu_gemm_naive(const float* A, const float* B, float* C, size_t M, size_t N, size_t K) {
+    for (int i = 0; i < M; ++i) {
+        for (int j = 0; j < N; ++j) {
+            float s = 0.0f;
+            for (int k = 0; k < K; ++k) {
+                s += A[i * K + k] * B[k * N + j];
+            }
+            C[i * N + j] = s;
+        }
+    }
+}
+
+
+static KernelArgs parse_args(int argc, char** argv) {
+    if (argc != 8) {
+        printf("Usage: ./gemm <kernel> M N K TB_M TB_N TB_K\n");
+        printf("Exiting....\n");
+        exit(1);
+    }
+
+    // Parse kernel version.
+    KernelVersion kernel = KernelVersion_from_string(argv[1]);
+    if (kernel == KernelVersion::Invalid) {
+        printf("\x1b[31mERROR\x1b[0m: Invalid kernel version: %s\n", argv[1]);
+        exit(1);
+    }
+
+    size_t M = (size_t) atoi(argv[2]);
+    size_t N = (size_t) atoi(argv[3]);
+    size_t K = (size_t) atoi(argv[4]);
+    size_t TB_M = (size_t) atoi(argv[5]);
+    size_t TB_N = (size_t) atoi(argv[6]);
+    size_t TB_K = (size_t) atoi(argv[7]);
+    return KernelArgs {
+        .kernel = kernel,
+        .M = M,
+        .N = N,
+        .K = K,
+        .TB_M = TB_M,
+        .TB_N = TB_N,
+        .TB_K = TB_K,
+        .blocks_M = M / TB_M,
+        .blocks_N = N / TB_N,
+        .blocks_K = K / TB_K,
+    };
+}

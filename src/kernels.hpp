@@ -5,16 +5,28 @@
 #include <cstdlib>
 
 //============================
-// Active Kernels
+// Flags
 //============================
 
-#define KERNEL_V00_BASIC
+#define GEMM_VERIFY 1
+#define GEMM_BENCHMARK 0
 
 //============================
-// Structs
+// Kernels
 //============================
+
+//==== Kernel Versions ====
+
+// ADD: new kernel versions
+enum class KernelVersion {
+    Invalid = 0,
+    V00_Basic,
+};
+
 
 struct KernelArgs {
+    KernelVersion kernel;
+
     const float *A;     // M x K
     const float *B;     // K x N
     float *C;           // M x N
@@ -32,6 +44,56 @@ struct KernelArgs {
     size_t blocks_K; // K / TB_K
 };
 
+
+//==== Kernel Declarations ====
+
+// ADD: new kernel declarations
+__global__ void kernel_v00_basic(KernelArgs);
+
+//==== Kernel Launches ====
+
+static inline void launch_kernel(KernelArgs kargs) {
+    #define KERNEL_CASE(version, func) \
+        case KernelVersion::version: func<<<grid, block>>>(kargs); break;
+
+    dim3 grid(kargs.blocks_M, kargs.blocks_N); // 2D grid of blocks_M x blocks_N blocks
+    dim3 block(kargs.TB_M, kargs.TB_N); // 2D block of TB_M x TB_N threads
+
+    switch (kargs.kernel) {
+        // ADD: new kernel launches
+        KERNEL_CASE(V00_Basic, kernel_v00_basic);
+        
+        default:
+            fprintf(stderr, "ERROR: Unsupported kernel version.\n");
+            exit(1);
+    }
+}
+
+//==== Kernel Version Parsing ====
+
+static inline KernelVersion KernelVersion_from_string(const char *str) {
+    struct KernelVersionMap {
+        const char* name;
+        KernelVersion version;
+    };
+
+    // ADD: new kernel name mappings
+    const KernelVersionMap version_map[] = {
+        {"v00_basic", KernelVersion::V00_Basic},
+    };
+
+    for (const auto& entry : version_map) {
+        if (strcmp(str, entry.name) == 0) {
+            return entry.version;
+        }
+    }
+    return KernelVersion::Invalid;
+}
+
+//============================
+// Helpers
+//============================
+
 #define UNPACK_KERNEL_ARGS(args) \
     const float* A = args.A; \
     const float* B = args.B; \
@@ -48,18 +110,6 @@ struct KernelArgs {
     size_t blocks_M = args.blocks_M; \
     size_t blocks_N = args.blocks_N; \
     size_t blocks_K = args.blocks_K;
-
-//============================
-// Kernels
-//============================
-
-#ifdef KERNEL_V00_BASIC
-__global__ void kernel_v00_basic(KernelArgs args);
-#endif
-
-//============================
-// Functions
-//============================
 
 // simple CUDA error-check macro
 static inline void cudaCheck(cudaError_t err) {
