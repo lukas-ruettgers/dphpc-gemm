@@ -22,5 +22,5 @@ __global__ void kernel_v00_basic(KernelArgs args) {
     }
     
     const int output_idx = row_C * N + col_C;
-    C[output_idx] = acc;
+    C[output_idx] += acc;
 }

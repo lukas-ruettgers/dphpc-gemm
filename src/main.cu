@@ -140,14 +140,17 @@ int main(int argc, char** argv) {
     float avg_ms = total_ms / BENCHMARK_RUNS;
 
     printf("\n---- Benchmark ----\n");
-    printf("Avg time: %f ms\n", avg_ms);
-    printf("Min time: %f ms\n", min_ms);
-    printf("Max time: %f ms\n", max_ms);
+    printf("Runtime: %f ms\n", avg_ms);
+    // printf("Min time: %f ms\n", min_ms);
+    // printf("Max time: %f ms\n", max_ms);
 
     double total_flops = 2.0 * M * N * K;
-
     double perf_tflops = total_flops / (avg_ms * 1e9);
     printf("Performance: %f TFLOP/s\n", perf_tflops);
+
+    double total_bytes = (sizeA + sizeB + 2 * sizeC) * sizeof(float); // Read A, B and read/write C
+    double bandwidth_gbps = total_bytes / (avg_ms * 1e6);
+    printf("Bandwidth: %f GB/s\n", bandwidth_gbps);
 
     #endif
 
