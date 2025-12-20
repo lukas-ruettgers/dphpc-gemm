@@ -5,7 +5,7 @@
 #include <cstdlib>
 
 //============================
-// Macros
+// MACRO PARAMETERS
 //============================
 
 #define GEMM_VERIFY 1
@@ -14,9 +14,9 @@
 #define WARMUP_RUNS 2
 #define BENCHMARK_RUNS 5
 
-//============================
+//================
 // Kernels
-//============================
+//================
 
 // Helper macros to define and declare kernel instances.
 #define KERNEL_INSTANCE(kernel_class) kernel_instance_##kernel_class
@@ -24,22 +24,22 @@
 #define DECLARE_KERNEL(kernel_class) class kernel_class; extern DEFINE_KERNEL_INSTANCE(kernel_class);
 
 
-struct KernelContext;
+//======================================================================================
+// DECLARE NEW KERNELS HERE
+//======================================================================================
 
 DECLARE_KERNEL(Kernel_V00_Basic);
 DECLARE_KERNEL(Kernel_V01_Coalesced);
 
-// ADD: new kernel versions
-enum class KernelVersion {
-    Invalid = 0,
-    V00_Basic,
-};
+//======================================================================================
+
+
+struct KernelContext;
 
 class Kernel {
     public:
     virtual void launch(KernelContext ctx) = 0;
 };
-
 
 struct KernelContext {
     Kernel *kernel;
@@ -61,11 +61,6 @@ struct KernelContext {
     size_t blocks_K; // K / TB_K
 };
 
-//==== Kernel Declarations ====
-
-// ADD: new kernel declarations
-// __global__ void kernel_v00_basic(KernelContext);
-
 //==== Kernel Version Parsing ====
 
 static inline Kernel *Kernel_from_string(const char *str) {
@@ -76,10 +71,17 @@ static inline Kernel *Kernel_from_string(const char *str) {
 
     #define MAP_ENTRY(str, kernel_class) {str, (Kernel *) &KERNEL_INSTANCE(kernel_class)}
 
-    // ADD: new kernel name mappings
     const KernelMap kernel_map[] = {
+
+//======================================================================================
+// ADD NEW KERNEL MAP ENTRIES HERE
+//======================================================================================
+
         MAP_ENTRY("v00_basic", Kernel_V00_Basic),
         MAP_ENTRY("v01_coalesced", Kernel_V01_Coalesced),
+
+//======================================================================================
+
     };
 
     #undef MAP_ENTRY
@@ -113,7 +115,6 @@ static inline Kernel *Kernel_from_string(const char *str) {
     size_t blocks_M = args.blocks_M; \
     size_t blocks_N = args.blocks_N; \
     size_t blocks_K = args.blocks_K;
-
 
 
 // simple CUDA error-check macro
