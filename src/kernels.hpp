@@ -30,6 +30,7 @@
 
 DECLARE_KERNEL(Kernel_V00_Basic);
 DECLARE_KERNEL(Kernel_V01_Coalesced);
+DECLARE_KERNEL(Kernel_V02_Shared_Mem);
 
 //======================================================================================
 
@@ -79,6 +80,7 @@ static inline Kernel *Kernel_from_string(const char *str) {
 
         MAP_ENTRY("v00_basic", Kernel_V00_Basic),
         MAP_ENTRY("v01_coalesced", Kernel_V01_Coalesced),
+        MAP_ENTRY("v02_shared_mem", Kernel_V02_Shared_Mem),
 
 //======================================================================================
 
