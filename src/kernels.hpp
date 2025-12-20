@@ -18,7 +18,16 @@
 // Kernels
 //============================
 
-//==== Kernel Versions ====
+// Helper macros to define and declare kernel instances.
+#define KERNEL_INSTANCE(kernel_class) kernel_instance_##kernel_class
+#define DEFINE_KERNEL_INSTANCE(kernel_class) kernel_class KERNEL_INSTANCE(kernel_class)
+#define DECLARE_KERNEL(kernel_class) class kernel_class; extern DEFINE_KERNEL_INSTANCE(kernel_class);
+
+
+struct KernelContext;
+
+DECLARE_KERNEL(Kernel_V00_Basic);
+
 
 // ADD: new kernel versions
 enum class KernelVersion {
@@ -26,9 +35,14 @@ enum class KernelVersion {
     V00_Basic,
 };
 
+class Kernel {
+    public:
+    virtual void launch(KernelContext ctx) = 0;
+};
 
-struct KernelArgs {
-    KernelVersion kernel;
+
+struct KernelContext {
+    Kernel *kernel;
 
     const float *A;     // M x K
     const float *B;     // K x N
@@ -47,50 +61,35 @@ struct KernelArgs {
     size_t blocks_K; // K / TB_K
 };
 
-
 //==== Kernel Declarations ====
 
 // ADD: new kernel declarations
-__global__ void kernel_v00_basic(KernelArgs);
-
-//==== Kernel Launches ====
-
-static inline void launch_kernel(KernelArgs kargs) {
-    #define KERNEL_CASE(version, func) \
-        case KernelVersion::version: func<<<grid, block>>>(kargs); break;
-
-    dim3 grid(kargs.blocks_M, kargs.blocks_N); // 2D grid of blocks_M x blocks_N blocks
-    dim3 block(kargs.TB_M, kargs.TB_N); // 2D block of TB_M x TB_N threads
-
-    switch (kargs.kernel) {
-        // ADD: new kernel launches
-        KERNEL_CASE(V00_Basic, kernel_v00_basic);
-        
-        default:
-            fprintf(stderr, "ERROR: Unsupported kernel version.\n");
-            exit(1);
-    }
-}
+// __global__ void kernel_v00_basic(KernelContext);
 
 //==== Kernel Version Parsing ====
 
-static inline KernelVersion KernelVersion_from_string(const char *str) {
-    struct KernelVersionMap {
+static inline Kernel *Kernel_from_string(const char *str) {
+    struct KernelMap {
         const char* name;
-        KernelVersion version;
+        Kernel *kernel;
     };
+
+    #define MAP_ENTRY(str, kernel_class) {str, (Kernel *) &KERNEL_INSTANCE(kernel_class)}
 
     // ADD: new kernel name mappings
-    const KernelVersionMap version_map[] = {
-        {"v00_basic", KernelVersion::V00_Basic},
+    const KernelMap kernel_map[] = {
+        MAP_ENTRY("v00_basic", Kernel_V00_Basic),
     };
 
-    for (const auto& entry : version_map) {
+    #undef MAP_ENTRY
+
+    for (const auto& entry : kernel_map) {
         if (strcmp(str, entry.name) == 0) {
-            return entry.version;
+            return entry.kernel;
         }
     }
-    return KernelVersion::Invalid;
+
+    return nullptr;
 }
 
 //============================
@@ -113,6 +112,8 @@ static inline KernelVersion KernelVersion_from_string(const char *str) {
     size_t blocks_M = args.blocks_M; \
     size_t blocks_N = args.blocks_N; \
     size_t blocks_K = args.blocks_K;
+
+
 
 // simple CUDA error-check macro
 static inline void cudaCheck(cudaError_t err) {

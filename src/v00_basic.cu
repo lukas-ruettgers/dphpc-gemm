@@ -4,8 +4,8 @@
  * The most basic version of a GEMM kernel.
  */
 
-__global__ void kernel_v00_basic(KernelArgs args) {
-    UNPACK_KERNEL_ARGS(args);
+__global__ void kernel_v00_basic(KernelContext ctx) {
+    UNPACK_KERNEL_ARGS(ctx);
 
     // Map block and thread IDs to row and column.
     const int row_C = blockIdx.x * blockDim.x + threadIdx.x;
@@ -24,3 +24,18 @@ __global__ void kernel_v00_basic(KernelArgs args) {
     const int output_idx = row_C * N + col_C;
     C[output_idx] += acc;
 }
+
+
+class Kernel_V00_Basic : public Kernel {
+    public:
+    void launch(KernelContext ctx) override {
+        UNPACK_KERNEL_ARGS(ctx);
+
+        dim3 block(TB_M, TB_N); // 2D block of TB_M x TB_N threads
+        dim3 grid(blocks_M, blocks_N); // 2D grid of blocks_M x blocks_N blocks
+
+        kernel_v00_basic<<<grid, block>>>(ctx);
+    }
+};
+
+DEFINE_KERNEL_INSTANCE(Kernel_V00_Basic);

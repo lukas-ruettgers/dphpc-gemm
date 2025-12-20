@@ -9,12 +9,12 @@
 
 // CPU naive gemm for verification: C = A * B
 static void cpu_gemm_naive(const float* A, const float* B, float* C, size_t M, size_t N, size_t K);
-static KernelArgs parse_args(int argc, char** argv);
+static KernelContext parse_args(int argc, char** argv);
 
 
 int main(int argc, char** argv) {
-    KernelArgs kargs = parse_args(argc, argv);
-    UNPACK_KERNEL_ARGS(kargs);
+    KernelContext ctx = parse_args(argc, argv);
+    UNPACK_KERNEL_ARGS(ctx);
 
     printf("\nStarting GEMM framework...\n");
     printf("(M, N, K) = (%lu, %lu, %lu)\n", M, N, K);
@@ -44,9 +44,9 @@ int main(int argc, char** argv) {
     cudaCheck(cudaMalloc(&devC, sizeC * sizeof(float)));
 
     // Set device pointers in kernel args.
-    kargs.A = devA;
-    kargs.B = devB;
-    kargs.C = devC;
+    ctx.A = devA;
+    ctx.B = devB;
+    ctx.C = devC;
 
     // Copy blocked tensors to device
     cudaCheck(cudaMemcpy(devA, hostA, sizeA * sizeof(float), cudaMemcpyHostToDevice));
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
     // gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
 
     printf("\nLaunching kernel...\n");
-    launch_kernel(kargs);
+    ctx.kernel->launch(ctx);
 
     cudaCheck(cudaGetLastError());
     cudaCheck(cudaDeviceSynchronize());
@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
     // Warm-up
     // -----------------------------
     for (int i = 0; i < WARMUP_RUNS; i++) {
-        launch_kernel(kargs);
+        ctx.kernel->launch(ctx);
     }
     cudaDeviceSynchronize();
 
@@ -121,7 +121,8 @@ int main(int argc, char** argv) {
     for (int i = 0; i < BENCHMARK_RUNS; i++) {
         cudaEventRecord(start);
 
-        launch_kernel(kargs);
+        ctx.kernel->launch(ctx);
+        cudaDeviceSynchronize();
         
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
@@ -176,7 +177,7 @@ static void cpu_gemm_naive(const float* A, const float* B, float* C, size_t M, s
 }
 
 
-static KernelArgs parse_args(int argc, char** argv) {
+static KernelContext parse_args(int argc, char** argv) {
     if (argc != 8) {
         printf("Usage: ./gemm <kernel> M N K TB_M TB_N TB_K\n");
         printf("Exiting....\n");
@@ -184,9 +185,9 @@ static KernelArgs parse_args(int argc, char** argv) {
     }
 
     // Parse kernel version.
-    KernelVersion kernel = KernelVersion_from_string(argv[1]);
-    if (kernel == KernelVersion::Invalid) {
-        printf("\x1b[31mERROR\x1b[0m: Invalid kernel version: %s\n", argv[1]);
+    Kernel *kernel = Kernel_from_string(argv[1]);
+    if (kernel == nullptr) {
+        printf("\x1b[31mERROR\x1b[0m: Invalid kernel: %s\n", argv[1]);
         exit(1);
     }
 
@@ -196,7 +197,8 @@ static KernelArgs parse_args(int argc, char** argv) {
     size_t TB_M = (size_t) atoi(argv[5]);
     size_t TB_N = (size_t) atoi(argv[6]);
     size_t TB_K = (size_t) atoi(argv[7]);
-    return KernelArgs {
+
+    return KernelContext {
         .kernel = kernel,
         .M = M,
         .N = N,
