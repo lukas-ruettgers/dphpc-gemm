@@ -27,7 +27,7 @@
 struct KernelContext;
 
 DECLARE_KERNEL(Kernel_V00_Basic);
-
+DECLARE_KERNEL(Kernel_V01_Coalesced);
 
 // ADD: new kernel versions
 enum class KernelVersion {
@@ -79,6 +79,7 @@ static inline Kernel *Kernel_from_string(const char *str) {
     // ADD: new kernel name mappings
     const KernelMap kernel_map[] = {
         MAP_ENTRY("v00_basic", Kernel_V00_Basic),
+        MAP_ENTRY("v01_coalesced", Kernel_V01_Coalesced),
     };
 
     #undef MAP_ENTRY
