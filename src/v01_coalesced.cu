@@ -31,8 +31,9 @@ class Kernel_V01_Coalesced : public Kernel {
     void launch(KernelContext ctx) override {
         UNPACK_KERNEL_ARGS(ctx);
 
-        dim3 block(TB_M, TB_N); // 2D block of TB_M x TB_N threads
-        dim3 grid(blocks_M, blocks_N); // 2D grid of blocks_M x blocks_N blocks
+        // swapped M and N because of swapped x and y in kernel.
+        dim3 block(TB_N, TB_M); // 2D block of TB_M x TB_N threads
+        dim3 grid(blocks_N, blocks_M); // 2D grid of blocks_M x blocks_N blocks
 
         kernel_v01_coalesced<<<grid, block>>>(ctx);
     }
