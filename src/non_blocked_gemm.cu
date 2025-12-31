@@ -260,6 +260,7 @@ int main(int argc, char** argv) {
 
     float total_ms = 0.f, min_ms = 1e9f, max_ms = 0.f;
 
+    std::cout << "-----BEGIN\n";
     for (int i = 0; i < ITER; i++) {
         cudaEventRecord(start);
 
@@ -281,7 +282,10 @@ int main(int argc, char** argv) {
         total_ms += ms;
         min_ms = std::min(min_ms, ms);
         max_ms = std::max(max_ms, ms);
+
+        std::cout << ms << "\n";
     }
+    std::cout << "-----END\n";
 
     float mean_ms = total_ms / ITER;
 
