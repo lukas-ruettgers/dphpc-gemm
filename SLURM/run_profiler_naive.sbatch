@@ -39,7 +39,7 @@ ncu \
   --section=MemoryWorkloadAnalysis_Tables \
   --metrics=l1tex__t_sector_hit_rate.pct,lts__t_sector_hit_rate.pct,l1tex__t_sectors_pipe_lsu_mem_global_op_ld.sum,l1tex__t_requests_pipe_lsu_mem_global_op_ld.sum \
   --export=targeted_analysis_naive_gemm \
-  ./non_blocked_gemm 4096 4096 4096 16 16 16 
+  ./non_blocked_gemm 4096 4096 256 32 32 32 
 
 ncu --import ./targeted_analysis_naive_gemm.ncu-rep --page details > ../prof_output/details_naive_gemm.txt
 
