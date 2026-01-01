@@ -32,12 +32,12 @@ inline void cudaCheck(cudaError_t err) {
 // Tile sizes (runtime)
 int TB_M = 64;
 int TB_N = 64;
-int TB_K = 8;
+int TB_K = 16;
 
 // Matrix sizes (runtime)
-int M = 4096;
-int K = 4096;
-int N = 4096;
+int M = 2048;
+int K = 2048;
+int N = 2048;
 
 constexpr int TM = 8;
 constexpr int TN = 8;
@@ -159,16 +159,19 @@ __global__ void blocked_gemm_kernel(
 
         // compute partial product for this thread's (tm,tn)
         for (int kk = 0; kk < TB_K_; ++kk) {
+            #pragma unroll
             for (int i = 0;i < TM;  i++){
                 register_m[i] =  sA[(tm * TM + i)*TB_K_ + kk];
             }
-
+            #pragma unroll
             for (int i = 0;i < TN; i++){
                 register_n[i] = sB[kk*TB_N_ + tn*TN +i];
             }
             // Each thread calculates TM x TN outputs
+            #pragma unroll
             for (int res_idx_m = 0; res_idx_m < TM; ++res_idx_m)
             {
+                #pragma unroll
                 for (int res_idx_n = 0; res_idx_n < TN; ++res_idx_n)
                 {
                     accum[res_idx_m * TN + res_idx_n] +=
