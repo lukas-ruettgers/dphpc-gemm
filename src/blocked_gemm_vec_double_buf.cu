@@ -5,7 +5,7 @@
 #include <cmath>
 #include <random>
 #include <iostream>
-#include <cassert>
+#include <cooperative_groups.h>
 
 #ifndef CPU_DEBUG
 // Set this to 1 to verify the correctness of the GPU-computed matrix.
@@ -42,9 +42,9 @@ int TB_N = 128;
 int TB_K = 16;
 
 // Matrix sizes (runtime)
-int M = 4096;
-int K = 1024;
-int N = 4096;
+int M = 8192;
+int K = 8192;
+int N = 8192;
 
 constexpr int TM = 8;
 constexpr int TN = 4;
@@ -101,6 +101,8 @@ void block_B_host(
     }
 }
 
+#include <cuda/barrier>
+
 // Device kernel: expects Ablk and Bblk in blocked layout described above.
 // C is standard row-major M x N.
 __global__ void __launch_bounds__(NUM_THREADS) blocked_gemm_kernel(
@@ -127,10 +129,6 @@ __global__ void __launch_bounds__(NUM_THREADS) blocked_gemm_kernel(
     constexpr int WSUBM = WM / WMITER;
     constexpr int WSUBN = WN / WNITER;
 
-    static_assert(WSUBN % TN == 0, "Sub-tile width must be divisible by TN");
-    static_assert(WARPSIZE % (WSUBN / TN) == 0, "Warp must be able to distribute evenly across TN columns");
-    static_assert(TN % 4 == 0, "TN must be 4 for float4 vectorized stores to C");
-
     const int thread_idx_in_warp = threadIdx.x % WARPSIZE;
     const int thread_col_in_warp = thread_idx_in_warp % (WSUBN / TN);
     const int thread_row_in_warp = thread_idx_in_warp / (WSUBN / TN);
@@ -143,68 +141,93 @@ __global__ void __launch_bounds__(NUM_THREADS) blocked_gemm_kernel(
 
     if (tm >= TB_M_ || tn >= TB_N_) return;
 
-    // Shared memory for tiles
-    extern __shared__ float smem[]; // size = TB_M*TB_K + TB_K*TB_N
-    float* sA = smem;                       // TB_M * TB_K
-    float* sB = smem + TB_M_ * TB_K_;        // TB_K * TB_N
+    // // Shared memory for tiles
+    // extern __shared__ float smem[]; // size = TB_M*TB_K + TB_K*TB_N
+    // float* sA = smem;                       // TB_M * TB_K
+    // float* sB = smem + TB_M_ * TB_K_;        // TB_K * TB_N
+
+    extern __shared__ char smem_raw[];
+
+    float* smem = reinterpret_cast<float*>(
+        (reinterpret_cast<uintptr_t>(smem_raw) + 15) & ~uintptr_t(15)
+    ); 
+
+    #pragma nv_diag_suppress static_var_with_dynamic_init
+    __shared__  cuda::barrier<cuda::thread_scope_block> bar;
+
+    // 3. Initialize the barrier (Only one thread does this)
+    if (tid == 0) {
+        init(&bar, blockDim.x); 
+    }
+    __syncthreads(); // Ensure barrier is ready
+
+    auto group = cooperative_groups::this_thread_block();
+    // Partition the single smem blob into 4 parts:
+    // sA_buf0, sA_buf1, sB_buf0, sB_buf1
+    float* sA0 = smem;
+    float* sA1 = sA0 + (TB_M_ * TB_K_);
+    float* sB0 = sA1 + (TB_M_ * TB_K_);
+    float* sB1 = sB0 + (TB_K_ * TB_N_);
+
+    // To index them easily like sA[read_buffer]:
+    float* sA[2] = {sA0, sA1};
+    float* sB[2] = {sB0, sB1};
+
 
     // Allocate thread-local cache for results in registerfile
     float accum[WMITER * TM * WNITER * TN] = {0.0f};
     float register_m[WMITER * TM] = {0.0f};
     float register_n[WNITER * TN] = {0.0f};
 
+    int read_buffer = 0;
+    int write_buffer = 0;
+    //Load the first tile into buffer 0
+
+    cuda::barrier<cuda::thread_scope_block>::arrival_token token;
+    // --- PROLOGUE: Start loading the first tile (bk = 0) ---
+    {
+        size_t a_off = (size_t)(bm * BK_) * (TB_M_ * TB_K_);
+        size_t b_off = (size_t)(bn) * (TB_K_ * TB_N_);
+
+        // CORRECTED: Use one collective call for the whole tile
+        cuda::memcpy_async(group, sA[0], &Ablk[a_off], cuda::aligned_size_t<16>(sizeof(float) * TB_M_ * TB_K_), bar);
+        cuda::memcpy_async(group, sB[0], &Bblk[b_off], cuda::aligned_size_t<16>(sizeof(float) * TB_K_ * TB_N_), bar); 
+
+        bar.arrive_and_wait();
+    }
+
     // Loop over bk blocks
     for (int bk = 0; bk < BK_; ++bk) {
 
-        // Load A block [TB_M x TB_K] from global Ablk to sA
-        // global address: Ablk[ ((bm * BK) + bk) * (TB_M*TB_K) + i*TB_K + j ]
-        size_t a_block_base = (size_t)((bm * BK_) + bk) * (TB_M_ * TB_K_);
-        size_t b_block_base = (size_t)((bk * BN_) + bn) * (TB_K_ * TB_N_);
+        // Start loading the NEXT tile (bk + 1) while we compute the current one
+        write_buffer = read_buffer ^ 1;
+        if (bk + 1 < BK_) {
+            size_t a_off = (size_t)(bm * BK_ + (bk + 1)) * (TB_M_ * TB_K_);
+            size_t b_off = (size_t)((bk + 1) * BN_ + bn) * (TB_K_ * TB_N_);
 
-        // 1. Cast Shared Memory pointers to float4
-        float4* sA_vec = reinterpret_cast<float4*>(sA);
-        float4* sB_vec = reinterpret_cast<float4*>(sB);
-
-        // 2. Cast Global Memory pointers to float4
-        // Note: We compute the base address in 'float' offset first, then cast to float4*
-        const float4* Ablk_vec = reinterpret_cast<const float4*>(&Ablk[a_block_base]);
-        const float4* Bblk_vec = reinterpret_cast<const float4*>(&Bblk[b_block_base]);
-
-        // 3. Load A (Vectorized)
-        // We assume TB_K is a multiple of 4.
-        int num_vec_A = (TB_M_ * TB_K_) / 4; 
+            cuda::memcpy_async(group, sA[write_buffer], &Ablk[a_off], cuda::aligned_size_t<16>(sizeof(float) * TB_M_ * TB_K_), bar);
+            cuda::memcpy_async(group, sB[write_buffer], &Bblk[b_off], cuda::aligned_size_t<16>(sizeof(float) * TB_K_ * TB_N_), bar);
+            
+            token = bar.arrive(); 
+        }
         
-        for (int idx = tid; idx < num_vec_A; idx += blockDim.x) {
-            // The copy is now a single instruction moving 128 bits
-            sA_vec[idx] = Ablk_vec[idx];
-        }
-
-        // 4. Load B (Vectorized)
-        // We assume TB_N is a multiple of 4.
-        int num_vec_B = (TB_K_ * TB_N_) / 4;
-
-        for (int idx = tid; idx < num_vec_B; idx += blockDim.x) {
-            sB_vec[idx] = Bblk_vec[idx];
-        }
-
-        __syncthreads();
-
-        // compute partial product for this thread's (tm,tn)
+        // compute partial product for this thread's (tm,tn) from read buffer
+        #pragma unroll
         for (int kk = 0; kk < TB_K_; ++kk) {
             #pragma unroll
             for (int wsub_row_idx = 0; wsub_row_idx < WMITER; ++wsub_row_idx){
-                #pragma unroll
+                // #pragma unroll
                 for (int i = 0;i < TM;  i++){
-                    register_m[wsub_row_idx * TM + i] =  sA[(kk * TB_M_) + warp_row * WM + wsub_row_idx * WSUBM +
+                    register_m[wsub_row_idx * TM + i] =  sA[read_buffer][(kk * TB_M_) + warp_row * WM + wsub_row_idx * WSUBM +
                            thread_row_in_warp * TM + i];
                 }
             }
             #pragma unroll
             for (int wsub_col_idx = 0; wsub_col_idx < WNITER; ++wsub_col_idx)
             {
-                #pragma unroll
+                // #pragma unroll
                 for (int i = 0;i < TN; i++){
-                    register_n[wsub_col_idx * TN + i] = sB[(kk * TB_N_) + warp_col * WN + wsub_col_idx * WSUBN +
+                    register_n[wsub_col_idx * TN + i] = sB[read_buffer][(kk * TB_N_) + warp_col * WN + wsub_col_idx * WSUBN +
                            thread_col_in_warp * TN + i];
                 }
             }
@@ -233,6 +256,11 @@ __global__ void __launch_bounds__(NUM_THREADS) blocked_gemm_kernel(
         }
 
         __syncthreads();
+        // Before starting the next iteration, wait for the async load to finish
+        if (bk + 1 < BK_) {
+            bar.wait(std::move(token));
+        }
+        read_buffer = write_buffer;
     }
  
 
@@ -303,36 +331,7 @@ int main(int argc, char** argv) {
     BN = N / TB_N;
     BK = K / TB_K;
 
-    // 1. Matrix Grid Fit
-    assert(M % TB_M == 0 && "M must be divisible by TB_M");
-    assert(N % TB_N == 0 && "N must be divisible by TB_N");
-    assert(K % TB_K == 0 && "K must be divisible by TB_K");
-
-    // 2. Tile-to-Warp Alignment
-    // Your kernel uses constexpr WM=64, WN=64. TB sizes must be multiples of these.
-    assert(TB_M % WM == 0 && "TB_M must be a multiple of WM (64)");
-    assert(TB_N % WN == 0 && "TB_N must be a multiple of WN (64)");
-
-    // 3. Warp Count Validation
-    // The number of threads in the block must exactly match the number of warps needed
-    // to cover the TB_M x TB_N area.
-    int total_warps_needed = (TB_M / WM) * (TB_N / WN);
-    assert(NUM_THREADS == total_warps_needed * WARPSIZE && 
-        "NUM_THREADS must equal (TB_M/WM) * (TB_N/WN) * 32");
-
-    // 4. Vectorization Requirements (float4)
-    // TB_K and TB_N must be multiples of 4 to allow float4 loads from global memory.
-    assert(TB_K % 4 == 0 && "TB_K must be a multiple of 4 for vectorized loads");
-    assert(TB_N % 4 == 0 && "TB_N must be a multiple of 4 for vectorized loads");
-
-    // 5. Shared Memory Capacity
-    // Calculate based on runtime TB values and check against device limits.
-    size_t smem_needed = (TB_M * TB_K + TB_K * TB_N) * sizeof(float);
-    int max_smem_per_block = 0;
-    cudaDeviceGetAttribute(&max_smem_per_block, cudaDevAttrMaxSharedMemoryPerBlock, 0);
-    assert(smem_needed <= (size_t)max_smem_per_block && "Requested shared memory exceeds device limits");
-
-    std::cout << "\n\nBlocked GEMM (vec) end-to-end example\n";
+    std::cout << "\n\nBlocked GEMM (double buf) end-to-end example\n";
     std::cout << "M=" << M << " K=" << K << " N=" << N << "\n";
     std::cout << "TB_M=" << TB_M << " TB_N=" << TB_N << " TB_K=" << TB_K << " TM=" << TM <<" TN=" << TN << "\n";
 
@@ -377,7 +376,7 @@ int main(int argc, char** argv) {
     // Launch kernel
     dim3 grid(BM, BN);
     dim3 block(NUM_THREADS); // one thread per TM output elements
-    size_t smem_bytes = (TB_M * TB_K + TB_K * TB_N) * sizeof(float);
+    size_t smem_bytes = 2*(TB_M * TB_K + TB_K * TB_N) * sizeof(float);
 
     std::cout << "Launching kernel grid(" << BM << "," << BN << ") block(" << NUM_THREADS << ") smem=" << smem_bytes << "\n";
 
