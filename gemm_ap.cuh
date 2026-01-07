@@ -11,6 +11,12 @@
 
 namespace gemm_cpasync_pipelined {
 
+
+inline __device__ void cp_async_commit_group_device() {
+    asm volatile("cp.async.commit_group;" ::: "memory");
+}
+
+
 using namespace cute;
 using cutlass::half_t;
 
@@ -42,10 +48,11 @@ __global__ void gemm_kernel_cpasync_pipelined(
   Tensor gC = local_tile(mC, cta_tiler, cta_coord, Step<_1,_1, X>{});
 
   constexpr int PAD_A = 8;
+  constexpr int PAD_B = 8;
   extern __shared__ __align__(128) half_t smem[];
   
   constexpr int sA_size = BM * (BK + PAD_A);
-  constexpr int sB_size = BN * BK;
+  constexpr int sB_size = BN * (BK + PAD_B);
   constexpr int stage_size = sA_size + sB_size;
 
   // MMA setup
@@ -61,12 +68,12 @@ __global__ void gemm_kernel_cpasync_pipelined(
 
   auto copy_a = make_tiled_copy(
       CopyAtomA{}, 
-      Layout<Shape<_32,_8>, Stride<_8,_1>>{},
+      Layout<Shape<_64,_4>, Stride<_4,_1>>{},
       Layout<Shape<_1,_8>>{});
   
   auto copy_b = make_tiled_copy(
       CopyAtomB{}, 
-      Layout<Shape<_32,_8>, Stride<_8,_1>>{},
+      Layout<Shape<_64,_4>, Stride<_4,_1>>{},
       Layout<Shape<_1,_8>>{});
 
   auto thr_copy_a = copy_a.get_thread_slice(threadIdx.x);
@@ -96,13 +103,14 @@ __global__ void gemm_kernel_cpasync_pipelined(
                           make_stride(Int<BK + PAD_A>{}, Int<1>{}));
     auto sB = make_tensor(make_smem_ptr(sB_ptr),
                           make_shape(Int<BN>{}, Int<BK>{}),
-                          make_stride(Int<BK>{}, Int<1>{}));
+                          make_stride(Int<BK + PAD_B>{}, Int<1>{}));
     
     Tensor tAsA = thr_copy_a.partition_D(sA);
     Tensor tBsB = thr_copy_b.partition_D(sB);
     
     copy(copy_a, tAgA(_,_,_,stage), tAsA);
     copy(copy_b, tBgB(_,_,_,stage), tBsB);
+    
     cp_async_fence();
   }
  //main loop 
@@ -118,17 +126,16 @@ __global__ void gemm_kernel_cpasync_pipelined(
                                make_stride(Int<BK + PAD_A>{}, Int<1>{}));
     auto sB_read = make_tensor(make_smem_ptr(sB_read_ptr),
                                make_shape(Int<BN>{}, Int<BK>{}),
-                               make_stride(Int<BK>{}, Int<1>{}));
+                               make_stride(Int<BK+ PAD_B>{}, Int<1>{}));
     
     auto tCsA = thr_mma.partition_A(sA_read);
     auto tCsB = thr_mma.partition_B(sB_read);
-    
     cp_async_wait<NUM_STAGES - 1>();
     __syncthreads();
     
     // Compute on current stage while next stages are loading
     gemm(tiled_mma, tCsA, tCsB, tCrC);
-    
+    __syncthreads(); 
     // Issue load for next tile (if available)
     int next_kt = kt + NUM_STAGES;
     if (next_kt < Ktiles) {
@@ -143,7 +150,7 @@ __global__ void gemm_kernel_cpasync_pipelined(
                                   make_stride(Int<BK + PAD_A>{}, Int<1>{}));
       auto sB_write = make_tensor(make_smem_ptr(sB_write_ptr),
                                   make_shape(Int<BN>{}, Int<BK>{}),
-                                  make_stride(Int<BK>{}, Int<1>{}));
+                                  make_stride(Int<BK + PAD_B>{}, Int<1>{}));
       
       Tensor tAsA_write = thr_copy_a.partition_D(sA_write);
       Tensor tBsB_write = thr_copy_b.partition_D(sB_write);
@@ -151,6 +158,7 @@ __global__ void gemm_kernel_cpasync_pipelined(
       // Issue next async load (overlaps with next iteration's compute)
       copy(copy_a, tAgA(_,_,_,next_kt), tAsA_write);
       copy(copy_b, tBgB(_,_,_,next_kt), tBsB_write);
+
       cp_async_fence();
     }
     
@@ -159,9 +167,9 @@ cp_async_wait<0>();
 __syncthreads();
   auto rC = coalesce(tCrC);
   auto gC_out = coalesce(tCgC);
-  for (int i = 0; i < size(rC); ++i) {
-    gC_out(i) = rC(i);
-  }
+  copy(tCrC, tCgC);
+
+
 }
 
 template<int BM=128, int BN=64, int BK=64, int NUM_STAGES=3>
@@ -177,8 +185,9 @@ inline void gemm_cpasync_pipelined_launch(
   dim3 grid((N + BN - 1) / BN, (M + BM - 1) / BM);
   
   constexpr int PAD_A = 8;
+  constexpr int PAD_B = 8;
   constexpr int sA_size = BM * (BK + PAD_A);
-  constexpr int sB_size = BN * BK;
+  constexpr int sB_size = BN * (BK + PAD_B);
   constexpr int stage_size = sA_size + sB_size;
   size_t smem_bytes = NUM_STAGES * stage_size * sizeof(half_t);
 //  size_t smem_bytes = NUM_STAGES * ((BM*(BK+PAD_A)) + (BN*BK)) * sizeof(half_t);
