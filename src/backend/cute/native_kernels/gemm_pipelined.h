@@ -20,7 +20,6 @@ inline __device__ void cp_async_commit_group_device() {
 using namespace cute;
 using cutlass::half_t;
 
-// Multi-stage pipelined with cp.async - true overlap
 template<int BM, int BN, int BK, int NUM_STAGES = 3>
 __launch_bounds__(256, 4)
 __global__ void gemm_kernel_cpasync_pipelined(
@@ -190,7 +189,6 @@ inline void gemm_cpasync_pipelined_launch(
   constexpr int sB_size = BN * (BK + PAD_B);
   constexpr int stage_size = sA_size + sB_size;
   size_t smem_bytes = NUM_STAGES * stage_size * sizeof(half_t);
-//  size_t smem_bytes = NUM_STAGES * ((BM*(BK+PAD_A)) + (BN*BK)) * sizeof(half_t);
   cudaFuncSetAttribute(
       gemm_kernel_cpasync_pipelined<BM, BN, BK, NUM_STAGES>,
       cudaFuncAttributeMaxDynamicSharedMemorySize,

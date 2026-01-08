@@ -42,12 +42,12 @@ __global__ void gemm_kernel_cpasync(half_t const* __restrict__ A,
 
   // Shared memory - DOUBLE BUFFER
   constexpr int PAD_A = 8;
+  constexpr int PAD_B = 8;
   extern __shared__ __align__(16) half_t smem[];
   
   half_t* sA_ptr = smem;
   half_t* sB_ptr = sA_ptr + 2 * (BM * (BK + PAD_A));
 
-  // Create TWO separate shared memory buffers (not a single tensor with extra dimension)
   auto sA0 = make_tensor(make_smem_ptr(sA_ptr),
                          make_shape(Int<BM>{}, Int<BK>{}),
                          make_stride(Int<BK + PAD_A>{}, Int<1>{}));
@@ -57,10 +57,10 @@ __global__ void gemm_kernel_cpasync(half_t const* __restrict__ A,
   
   auto sB0 = make_tensor(make_smem_ptr(sB_ptr),
                          make_shape(Int<BN>{}, Int<BK>{}),
-                         make_stride(Int<BK>{}, Int<1>{}));
-  auto sB1 = make_tensor(make_smem_ptr(sB_ptr + BN * BK),
+                         make_stride(Int<BK + PAD_B>{}, Int<1>{}));
+  auto sB1 = make_tensor(make_smem_ptr(sB_ptr + BN * (BK+PAD_B)),
                          make_shape(Int<BN>{}, Int<BK>{}),
-                         make_stride(Int<BK>{}, Int<1>{}));
+                         make_stride(Int<BK + PAD_B>{}, Int<1>{}));
 
   // MMA setup
   auto tiled_mma = make_tiled_mma(
@@ -115,7 +115,7 @@ __global__ void gemm_kernel_cpasync(half_t const* __restrict__ A,
     cp_async_fence();
   }
 
-  // Main K loop - DOUBLE BUFFERED
+  // Main K loop : DOUBLE BUFFERED
   for (int kt = 0; kt < Ktiles; ++kt)
   {
     int read_stage = kt % 2;
@@ -151,6 +151,7 @@ __global__ void gemm_kernel_cpasync(half_t const* __restrict__ A,
   for (int i = 0; i < size(rC); ++i) {
     gC_out(i) = rC(i);
   }
+
 }
 
 template<int BM=128, int BN=64, int BK=64>
@@ -165,7 +166,8 @@ inline void gemm_cpasync_launch(const half_t *dA,
   dim3 grid((N + BN - 1) / BN, (M + BM - 1) / BM);
 
   constexpr int PAD_A = 8;
-  size_t smem_bytes = 2 * (BM * (BK + PAD_A) + BN * BK) * sizeof(half_t);
+  constexpr int PAD_B = 8;
+  size_t smem_bytes = 2 * (BM * (BK + PAD_A) + BN * (BK+PAD_B)) * sizeof(half_t);
 
   cudaFuncSetAttribute(
       gemm_kernel_cpasync<BM,BN,BK>,
