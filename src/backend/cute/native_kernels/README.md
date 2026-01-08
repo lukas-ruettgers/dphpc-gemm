@@ -1,4 +1,4 @@
-# CUDA Matrix Multiplication Testing
+# Testing
 
 ## Compilation
 
@@ -20,9 +20,9 @@ nvcc -o test testing.cu -lcublas -I/home/apaladi/dphpc/cutlass/include --std=c++
 
 ## Parameters
 * `kernel` - Kernel name from the list above
-* `M`, `N`, `K` - Matrix dimensions (C = A × B, where A is M×K, B is K×N, C is M×N)
+* `M`, `N`, `K` - Matrix dimensions
 * `BM`, `BN`, `BK` - Block/tile dimensions
-* `--check` - Optional flag to verify correctness against reference implementation
+* `--check` - Optional flag to verify correctness against cpu reference 
 
 **Note:** The cpasync kernel with BK=32 should use cpasync_bk32 as the kernel name.
                      
