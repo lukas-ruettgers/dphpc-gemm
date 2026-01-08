@@ -16,13 +16,16 @@ nvcc -o test testing.cu -lcublas -I/home/apaladi/dphpc/cutlass/include --std=c++
 ./test <kernel> <M> <N> <K> <BM> <BN> <BK> [--check]
 ```
 
-Available kernels: cpasync, cpasync_bk32, vector, scalar, pipelined
-Parameters:
+**Available kernels:** cpasync, cpasync_bk32, vector, scalar, pipelined
 
-kernel - Kernel name from the list above
-M, N, K - Matrix dimensions (C = A × B, where A is M×K, B is K×N, C is M×N)
-BM, BN, BK - Block/tile dimensions
---check - Optional flag to verify correctness against reference implementation
+## Parameters
+* `kernel` - Kernel name from the list above
+* `M`, `N`, `K` - Matrix dimensions (C = A × B, where A is M×K, B is K×N, C is M×N)
+* `BM`, `BN`, `BK` - Block/tile dimensions
+* `--check` - Optional flag to verify correctness against reference implementation
+
+**Note:** The cpasync kernel with BK=32 should use cpasync_bk32 as the kernel name.
+                     
 
 ### Example:
 
