@@ -13,7 +13,7 @@
 
 #ifndef BENCHMARK
 // Set this to 1 to verify the correctness of the GPU-computed matrix.
-#define BENCHMARK 0
+#define BENCHMARK 1
 #endif
 
 #if BENCHMARK

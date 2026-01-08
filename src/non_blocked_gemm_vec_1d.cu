@@ -21,6 +21,7 @@ float WARMUP=3;
 float ITER=50;
 #endif
 
+
 // simple CUDA error-check macro
 inline void cudaCheck(cudaError_t err) {
     if (err != cudaSuccess) {
@@ -30,63 +31,25 @@ inline void cudaCheck(cudaError_t err) {
 }
 
 // Tile sizes (runtime)
-int TB_M = 16;
-int TB_N = 16;
-int TB_K = 16;
+int TB_M = 64;
+int TB_N = 64;
+int TB_K = 8;
 
 // Matrix sizes (runtime)
-int M = 1024;
-int K = 1024;
-int N = 1024;
+int M = 2048;
+int K = 2048;
+int N = 2048;
+
+constexpr int TM = 8;
 
 // Derived block counts (runtime)
 int BM, BK, BN;
 
-// Host blocking helpers (row-major input -> blocked 4D layout)
-void block_A_host(
-    const float* A,      // row-major M x K
-    float* Ablk)         // contiguous blocked: [BM][BK][TB_M][TB_K]
-{
-    for (int bm = 0; bm < BM; ++bm) {
-        for (int bk = 0; bk < BK; ++bk) {
-            // pointer to destination block
-            size_t block_index = (size_t)bm * BK + bk;
-            float* dst_block = Ablk + block_index * (TB_M * TB_K);
 
-            for (int i = 0; i < TB_M; ++i) {
-                for (int j = 0; j < TB_K; ++j) {
-                    int global_m = bm * TB_M + i;
-                    int global_k = bk * TB_K + j;
-                    dst_block[i * TB_K + j] = A[global_m * K + global_k];
-                }
-            }
-        }
-    }
-}
 
-void block_B_host(
-    const float* B,      // row-major K x N
-    float* Bblk)         // contiguous blocked: [BK][BN][TB_K][TB_N]
-{
-    for (int bk = 0; bk < BK; ++bk) {
-        for (int bn = 0; bn < BN; ++bn) {
-            size_t block_index = (size_t)bk * BN + bn;
-            float* dst_block = Bblk + block_index * (TB_K * TB_N);
 
-            for (int i = 0; i < TB_K; ++i) {
-                for (int j = 0; j < TB_N; ++j) {
-                    int global_k = bk * TB_K + i;
-                    int global_n = bn * TB_N + j;
-                    dst_block[i * TB_N + j] = B[global_k * N + global_n];
-                }
-            }
-        }
-    }
-}
-
-// Device kernel: expects Ablk and Bblk in blocked layout described above.
 // C is standard row-major M x N.
-__global__ void blocked_gemm_kernel(
+__global__ void gemm_kernel(
     const float* Ablk,
     const float* Bblk,
     float* C,
@@ -98,7 +61,7 @@ __global__ void blocked_gemm_kernel(
     const int bm = blockIdx.x; // 0..BM-1
     const int bn = blockIdx.y; // 0..BN-1
 
-    // each thread computes one output element within TB_M x TB_N
+    // each thread computes TM output elements within TB_M x TB_N
     const int tid = threadIdx.x;
     const int tm = tid / TB_N_; // 0..TB_M-1
     const int tn = tid % TB_N_; // 0..TB_N-1
@@ -110,61 +73,92 @@ __global__ void blocked_gemm_kernel(
     float* sA = smem;                       // TB_M * TB_K
     float* sB = smem + TB_M_ * TB_K_;        // TB_K * TB_N
 
-    float accum = 0.0f;
+    // Allocate thread-local cache for results in registerfile
+    float accum[TM] = {0.0f};
 
     // Loop over bk blocks
     for (int bk = 0; bk < BK_; ++bk) {
 
-        // Load A block [TB_M x TB_K] from global Ablk to sA
-        // global address: Ablk[ ((bm * BK) + bk) * (TB_M*TB_K) + i*TB_K + j ]
-        size_t a_block_base = (size_t)((bm * BK_) + bk) * (TB_M_ * TB_K_);
-        size_t b_block_base = (size_t)((bk * BN_) + bn) * (TB_K_ * TB_N_);
+        // GLOBAL TILE ORIGIN IN NON-BLOCKED MATRICES
+        int global_row_A = bm * TB_M_;         // starting row of tile in A
+        int global_col_A = bk * TB_K_;         // starting col of tile in A
+
+        int global_row_B = bk * TB_K_;         // starting row of tile in B
+        int global_col_B = bn * TB_N_;         // starting col of tile in B
 
         // 1. Cast Shared Memory pointers to float4
         float4* sA_vec = reinterpret_cast<float4*>(sA);
         float4* sB_vec = reinterpret_cast<float4*>(sB);
 
-        // 2. Cast Global Memory pointers to float4
-        // Note: We compute the base address in 'float' offset first, then cast to float4*
-        const float4* Ablk_vec = reinterpret_cast<const float4*>(&Ablk[a_block_base]);
-        const float4* Bblk_vec = reinterpret_cast<const float4*>(&Bblk[b_block_base]);
-
-        // 3. Load A (Vectorized)
         // We assume TB_K is a multiple of 4.
-        int num_vec_A = (TB_M_ * TB_K_) / 4; 
-        
-        for (int idx = tid; idx < num_vec_A; idx += blockDim.x) {
-            // The copy is now a single instruction moving 128 bits
-            sA_vec[idx] = Ablk_vec[idx];
-        }
+        int num_vec_A = (TB_M_ * TB_K_) / 4;
 
-        // 4. Load B (Vectorized)
-        // We assume TB_N is a multiple of 4.
+        // cooperative load of A tile: TB_M x TB_K
+        for (int idx = tid; idx < num_vec_A; idx += blockDim.x) {
+            int i = idx / (TB_K_/4);   // local row tid-> 0,1,..., 63, 8x4
+            int j = idx % (TB_K_/4);   // local col
+            j*=4;
+
+            int row = global_row_A + i;
+            int col = global_col_A + j;
+            
+            const float4* Ablk_vec = reinterpret_cast<const float4*>(&Ablk[row * K_ + col]);
+
+            if (row < M_ && col < K_)
+                sA_vec[idx] = *Ablk_vec;   // row-major A
+            else
+                sA_vec[idx] = {0.0f, 0.0f, 0.0f, 0.0f};
+            
+
+            // if (row < M_ && col < K_)
+            //     sA[i * TB_K_ + j] = Ablk[row * K_ + col];   // row-major A
+            // else
+            //     sA[i * TB_K_ + j] = 0.0f;
+        }
+        
         int num_vec_B = (TB_K_ * TB_N_) / 4;
 
+        // cooperative load of B tile: TB_K × TB_N
         for (int idx = tid; idx < num_vec_B; idx += blockDim.x) {
-            sB_vec[idx] = Bblk_vec[idx];
+            int i = idx / (TB_N_/4);   // local row
+            int j = idx % (TB_N_/4);   // local col
+            j*=4;
+
+            int row = global_row_B + i;
+            int col = global_col_B + j;
+
+            const float4* Bblk_vec = reinterpret_cast<const float4*>(&Bblk[row * N_ + col]);
+
+            if (row < K_ && col < N_)
+                sB_vec[idx] = *Bblk_vec;   // row-major B
+            else
+                sB_vec[idx] = {0.0f, 0.0f, 0.0f, 0.0f};
         }
 
         __syncthreads();
 
         // compute partial product for this thread's (tm,tn)
         for (int kk = 0; kk < TB_K_; ++kk) {
-            float a = sA[tm * TB_K_ + kk];
             float b = sB[kk * TB_N_ + tn];
-            accum += a * b;
+            for (int res_idx=0;res_idx<TM;res_idx++){
+                //float a = sA[tm * TB_K_ + kk];
+                accum[res_idx]+= sA[(tm * TM + res_idx)*TB_K_ + kk]*b;
+            }
         }
 
         __syncthreads();
     }
 
-    // Write to C
-    int row = bm * TB_M_ + tm;
-    int col = bn * TB_N_ + tn;
-    if (row < M_ && col < N_) {
-        C[row * N_ + col] = accum;
+    for(int res_idx=0;res_idx<TM;res_idx++){
+        // Write to C
+        int row = bm * TB_M_ + tm * TM + res_idx;
+        int col = bn * TB_N_ + tn;
+        if (row < M_ && col < N_) {
+            C[row * N_ + col] = accum[res_idx];
+        }
     }
 }
+
 
 // CPU naive gemm for verification: C = A * B
 void cpu_gemm_naive(const float* A, const float* B, float* C) {
@@ -197,11 +191,11 @@ int main(int argc, char** argv) {
     BN = N / TB_N;
     BK = K / TB_K;
 
-    std::cout << "\n\nBlocked GEMM (vec) end-to-end example\n";
+    std::cout << "\n\nNon-blocked GEMM (vec) end-to-end example\n";
     std::cout << "M=" << M << " K=" << K << " N=" << N << "\n";
-    std::cout << "TB_M=" << TB_M << " TB_N=" << TB_N << " TB_K=" << TB_K << "\n";
+    std::cout << "TB_M=" << TB_M << " TB_N=" << TB_N << " TB_K=" << TB_K << " TM=" << TM << "\n";
 
-    // Allocate host row-major matrices
+        // Allocate host row-major matrices
     size_t sizeA = (size_t)M * K;
     size_t sizeB = (size_t)K * N;
     size_t sizeC = (size_t)M * N;
@@ -217,36 +211,25 @@ int main(int argc, char** argv) {
     for (size_t i = 0; i < sizeA; ++i) hA[i] = dist(rng);
     for (size_t i = 0; i < sizeB; ++i) hB[i] = dist(rng);
 
-    // Allocate blocked host buffers
-    size_t sizeAblk = (size_t)BM * BK * TB_M * TB_K;
-    size_t sizeBblk = (size_t)BK * BN * TB_K * TB_N;
-
-    float* hAblk = (float*)malloc(sizeAblk * sizeof(float));
-    float* hBblk = (float*)malloc(sizeBblk * sizeof(float));
-
-    // Block A and B on host
-    block_A_host(hA, hAblk);
-    block_B_host(hB, hBblk);
-
     // Device allocations
     float *dAblk = nullptr, *dBblk = nullptr, *dC = nullptr;
-    cudaCheck(cudaMalloc(&dAblk, sizeAblk * sizeof(float)));
-    cudaCheck(cudaMalloc(&dBblk, sizeBblk * sizeof(float)));
+    cudaCheck(cudaMalloc(&dAblk, sizeA * sizeof(float)));
+    cudaCheck(cudaMalloc(&dBblk, sizeB * sizeof(float)));
     cudaCheck(cudaMalloc(&dC, sizeC * sizeof(float)));
 
     // Copy blocked tensors to device
-    cudaCheck(cudaMemcpy(dAblk, hAblk, sizeAblk * sizeof(float), cudaMemcpyHostToDevice));
-    cudaCheck(cudaMemcpy(dBblk, hBblk, sizeBblk * sizeof(float), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpy(dAblk, hA, sizeA * sizeof(float), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpy(dBblk, hB, sizeB * sizeof(float), cudaMemcpyHostToDevice));
     cudaCheck(cudaMemset(dC, 0, sizeC * sizeof(float)));
 
     // Launch kernel
     dim3 grid(BM, BN);
-    dim3 block(TB_M * TB_N); // one thread per output element
+    dim3 block((TB_M / TM) * TB_N); // one thread per output element
     size_t smem_bytes = (TB_M * TB_K + TB_K * TB_N) * sizeof(float);
 
-    std::cout << "Launching kernel grid(" << BM << "," << BN << ") block(" << (TB_M*TB_N) << ") smem=" << smem_bytes << "\n";
+    std::cout << "Launching kernel grid(" << BM << "," << BN << ") block(" << ((TB_M / TM) * TB_N) << ") smem=" << smem_bytes << "\n";
 
-    blocked_gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
+    gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
     cudaCheck(cudaGetLastError());
     cudaCheck(cudaDeviceSynchronize());
 
@@ -292,7 +275,7 @@ int main(int argc, char** argv) {
     // Warm-up (5 iterations)
     // -----------------------------
     for (int i = 0; i < WARMUP; i++) {
-        blocked_gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
+        gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
     }
     cudaDeviceSynchronize();
 
@@ -308,7 +291,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < ITER; i++) {
         cudaEventRecord(start);
 
-        blocked_gemm_kernel<<<grid, block, smem_bytes>>>(
+        gemm_kernel<<<grid, block, smem_bytes>>>(
             dAblk, dBblk, dC,
             M, N, K,
             TB_M, TB_N, TB_K,
@@ -366,7 +349,6 @@ int main(int argc, char** argv) {
 
     // Cleanup
     free(hA); free(hB); free(hC); free(hC_ref);
-    free(hAblk); free(hBblk);
     cudaFree(dAblk); cudaFree(dBblk); cudaFree(dC);
 
     return 0;

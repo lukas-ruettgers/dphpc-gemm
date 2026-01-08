@@ -5,6 +5,7 @@
 #include <cmath>
 #include <random>
 #include <iostream>
+#include <cassert>
 
 #ifndef CPU_DEBUG
 // Set this to 1 to verify the correctness of the GPU-computed matrix.
@@ -31,14 +32,23 @@ inline void cudaCheck(cudaError_t err) {
 }
 
 // Tile sizes (runtime)
-int TB_M = 16;
-int TB_N = 16;
+int TB_M = 128;
+int TB_N = 128;
 int TB_K = 16;
 
 // Matrix sizes (runtime)
 int M = 4096;
-int K = 4096;
+int K = 1024;
 int N = 4096;
+
+constexpr int TM = 8;
+constexpr int TN = 4;
+
+constexpr int WARPSIZE = 32;
+constexpr int WM = 64;
+constexpr int WN = 64;
+constexpr int WNITER= 4;
+constexpr int NUM_THREADS = 128;
 
 // Derived block counts (runtime)
 int BM, BK, BN;
@@ -47,7 +57,7 @@ int BM, BK, BN;
 
 
 // C is standard row-major M x N.
-__global__ void gemm_kernel(
+__global__ void __launch_bounds__(NUM_THREADS) gemm_kernel(
     const float* Ablk,
     const float* Bblk,
     float* C,
@@ -55,26 +65,51 @@ __global__ void gemm_kernel(
     int TB_M_, int TB_N_, int TB_K_,
     int BM_, int BN_, int BK_)
 {
+    // Which block of C this is:
     const int bm = blockIdx.x; // 0..BM-1
     const int bn = blockIdx.y; // 0..BN-1
 
-    // Each thread computes one element in TB_M x TB_N tile
+    // each thread computes TM output elements within TB_M x TB_N
     const int tid = threadIdx.x;
-    const int tm = tid / TB_N_;
-    const int tn = tid % TB_N_;
+    const int warps_per_row = TB_N_/WN;
+
+    const int warp_idx = tid/WARPSIZE;
+    const int warp_col = warp_idx % warps_per_row;
+    const int warp_row = warp_idx / warps_per_row;
+
+    constexpr int WMITER = (WM * WN) / (WARPSIZE * TM * TN * WNITER);
+    constexpr int WSUBM = WM / WMITER;
+    constexpr int WSUBN = WN / WNITER;
+
+    static_assert(WSUBN % TN == 0, "Sub-tile width must be divisible by TN");
+    static_assert(WARPSIZE % (WSUBN / TN) == 0, "Warp must be able to distribute evenly across TN columns");
+    static_assert(TN % 4 == 0, "TN must be 4 for float4 vectorized stores to C");
+
+    const int thread_idx_in_warp = threadIdx.x % WARPSIZE;
+    const int thread_col_in_warp = thread_idx_in_warp % (WSUBN / TN);
+    const int thread_row_in_warp = thread_idx_in_warp / (WSUBN / TN);
+
+
+    // How many threads are there in one row of the tile?
+    const int threads_per_row = TB_N_ / TN;
+    const int tm = tid / threads_per_row; // 0..TB_M-1
+    const int tn = tid % threads_per_row; // 0..TB_N-1
 
     if (tm >= TB_M_ || tn >= TB_N_) return;
 
-    // Shared memory
-    extern __shared__ float smem[];
+    // Shared memory for tiles
+    extern __shared__ float smem[]; // size = TB_M*TB_K + TB_K*TB_N
     float* sA = smem;                       // TB_M * TB_K
-    float* sB = smem + TB_M_ * TB_K_;         // TB_K * TB_N
+    float* sB = smem + TB_M_ * TB_K_;        // TB_K * TB_N
 
-    float accum = 0.0f;
+    // Allocate thread-local cache for results in registerfile
+    float accum[WMITER * TM * WNITER * TN] = {0.0f};
+    float register_m[WMITER * TM] = {0.0f};
+    float register_n[WNITER * TN] = {0.0f};
 
-    // Loop over BK tiles
+    // Loop over bk blocks
     for (int bk = 0; bk < BK_; ++bk) {
-        
+
         // GLOBAL TILE ORIGIN IN NON-BLOCKED MATRICES
         int global_row_A = bm * TB_M_;         // starting row of tile in A
         int global_col_A = bk * TB_K_;         // starting col of tile in A
@@ -91,25 +126,19 @@ __global__ void gemm_kernel(
 
         // cooperative load of A tile: TB_M x TB_K
         for (int idx = tid; idx < num_vec_A; idx += blockDim.x) {
-            int i = idx / (TB_K_/4);   // local row tid-> 0,1,..., 63, 8x4
-            int j = idx % (TB_K_/4);   // local col
-            j*=4;
-
-            int row = global_row_A + i;
-            int col = global_col_A + j;
+            int k_local = idx / (TB_M_ / 4); // row in the transposed matrix (K-dim)
+            int m_vec   = idx % (TB_M_ / 4); // col in the transposed matrix (M-dim)
             
-            const float4* Ablk_vec = reinterpret_cast<const float4*>(&Ablk[row * K_ + col]);
+            // Global coordinates in the TRANSPOSED matrix
+            int global_k = bk * TB_K_ + k_local;
+            int global_m = bm * TB_M_ + (m_vec * 4);
 
-            if (row < M_ && col < K_)
-                sA_vec[idx] = *Ablk_vec;   // row-major A
-            else
+            if (global_k < K_ && global_m < M_) {
+                // Linear load is now perfectly aligned with sA's required layout
+                sA_vec[idx] = *reinterpret_cast<const float4*>(&Ablk[global_k * M_ + global_m]);
+            } else {
                 sA_vec[idx] = {0.0f, 0.0f, 0.0f, 0.0f};
-            
-
-            // if (row < M_ && col < K_)
-            //     sA[i * TB_K_ + j] = Ablk[row * K_ + col];   // row-major A
-            // else
-            //     sA[i * TB_K_ + j] = 0.0f;
+            }
         }
         
         int num_vec_B = (TB_K_ * TB_N_) / 4;
@@ -133,22 +162,97 @@ __global__ void gemm_kernel(
 
         __syncthreads();
 
-        // Compute partial GEMM for this tile
+        // compute partial product for this thread's (tm,tn)
         for (int kk = 0; kk < TB_K_; ++kk) {
-            float a = sA[tm * TB_K_ + kk];
-            float b = sB[kk * TB_N_ + tn];
-            accum += a * b;
+            #pragma unroll
+            for (int wsub_row_idx = 0; wsub_row_idx < WMITER; ++wsub_row_idx){
+                #pragma unroll
+                for (int i = 0;i < TM;  i++){
+                    register_m[wsub_row_idx * TM + i] =  sA[(kk * TB_M_) + warp_row * WM + wsub_row_idx * WSUBM +
+                           thread_row_in_warp * TM + i];
+                }
+            }
+            #pragma unroll
+            for (int wsub_col_idx = 0; wsub_col_idx < WNITER; ++wsub_col_idx)
+            {
+                #pragma unroll
+                for (int i = 0;i < TN; i++){
+                    register_n[wsub_col_idx * TN + i] = sB[(kk * TB_N_) + warp_col * WN + wsub_col_idx * WSUBN +
+                           thread_col_in_warp * TN + i];
+                }
+            }
+
+            #pragma unroll
+            for (uint wsub_row_idx = 0; wsub_row_idx < WMITER; ++wsub_row_idx)
+            {
+                #pragma unroll
+                for (uint wsub_col_idx = 0; wsub_col_idx < WNITER; ++wsub_col_idx)
+                {
+                    // Each thread calculates TM x TN outputs
+                    #pragma unroll
+                    for (int res_idx_m = 0; res_idx_m < TM; ++res_idx_m)
+                    {
+                        #pragma unroll
+                        for (int res_idx_n = 0; res_idx_n < TN; ++res_idx_n)
+                        {
+                            accum[(wsub_row_idx * TM + res_idx_m) * (WNITER * TN) +
+                                       (wsub_col_idx * TN) + res_idx_n] +=
+                            register_m[wsub_row_idx * TM + res_idx_m] *
+                            register_n[wsub_col_idx * TN + res_idx_n];
+                        }
+                    }
+                }
+            }
         }
 
         __syncthreads();
     }
+ 
 
-    // Write C tile result
-    int row = bm * TB_M_ + tm;
-    int col = bn * TB_N_ + tn;
+    C+= (bm * TB_M_ + warp_row * WM) * N_ + bn * TB_N_ + warp_col * WN;
+    #pragma unroll
+    for (uint wsub_row_idx = 0; wsub_row_idx < WMITER; ++wsub_row_idx)
+    {
+        #pragma unroll
+        for (uint wsub_col_idx = 0; wsub_col_idx < WNITER; ++wsub_col_idx)
+        {
+            float *matrix_c_interim = C + (wsub_row_idx * WSUBM) * N_ +
+                                      wsub_col_idx * WSUBN;
 
-    if (row < M_ && col < N_) {
-        C[row * N_ + col] = accum;
+            #pragma unroll
+            for (uint res_idx_m = 0; res_idx_m < TM; res_idx_m += 1)
+            {
+                #pragma unroll
+                for (uint res_idx_n = 0; res_idx_n < TN; res_idx_n += 4)
+                {
+                    float4 tmp_c = reinterpret_cast<float4 *>(
+                        &matrix_c_interim[(thread_row_in_warp * TM + res_idx_m) * N_ +
+                                          thread_col_in_warp * TN + res_idx_n])[0];
+
+                    const int res_idx = (wsub_row_idx * TM + res_idx_m) * (WNITER * TN) +
+                                        wsub_col_idx * TN + res_idx_n;
+                    tmp_c.x = accum[res_idx + 0];
+                    tmp_c.y = accum[res_idx + 1];
+                    tmp_c.z = accum[res_idx + 2];
+                    tmp_c.w = accum[res_idx + 3];
+
+                    reinterpret_cast<float4 *>(
+                        &matrix_c_interim[(thread_row_in_warp * TM + res_idx_m) * N_ +
+                                          thread_col_in_warp * TN + res_idx_n])[0] = tmp_c;
+                }
+            }
+        }
+    }
+}
+
+void transpose_host(const float* src, float* dst, size_t rows, size_t cols) {
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            // src is [rows][cols], dst is [cols][rows]
+            // src index: i * cols + j
+            // dst index: j * rows + i
+            dst[j * rows + i] = src[i * cols + j];
+        }
     }
 }
 
@@ -184,9 +288,38 @@ int main(int argc, char** argv) {
     BN = N / TB_N;
     BK = K / TB_K;
 
-    std::cout << "\n\n Non-Blocked GEMM (vec) end-to-end example\n";
+    // 1. Matrix Grid Fit
+    assert(M % TB_M == 0 && "M must be divisible by TB_M");
+    assert(N % TB_N == 0 && "N must be divisible by TB_N");
+    assert(K % TB_K == 0 && "K must be divisible by TB_K");
+
+    // 2. Tile-to-Warp Alignment
+    // Your kernel uses constexpr WM=64, WN=64. TB sizes must be multiples of these.
+    assert(TB_M % WM == 0 && "TB_M must be a multiple of WM (64)");
+    assert(TB_N % WN == 0 && "TB_N must be a multiple of WN (64)");
+
+    // 3. Warp Count Validation
+    // The number of threads in the block must exactly match the number of warps needed
+    // to cover the TB_M x TB_N area.
+    int total_warps_needed = (TB_M / WM) * (TB_N / WN);
+    assert(NUM_THREADS == total_warps_needed * WARPSIZE && 
+        "NUM_THREADS must equal (TB_M/WM) * (TB_N/WN) * 32");
+
+    // 4. Vectorization Requirements (float4)
+    // TB_K and TB_N must be multiples of 4 to allow float4 loads from global memory.
+    assert(TB_K % 4 == 0 && "TB_K must be a multiple of 4 for vectorized loads");
+    assert(TB_N % 4 == 0 && "TB_N must be a multiple of 4 for vectorized loads");
+
+    // 5. Shared Memory Capacity
+    // Calculate based on runtime TB values and check against device limits.
+    size_t smem_needed = (TB_M * TB_K + TB_K * TB_N) * sizeof(float);
+    int max_smem_per_block = 0;
+    cudaDeviceGetAttribute(&max_smem_per_block, cudaDevAttrMaxSharedMemoryPerBlock, 0);
+    assert(smem_needed <= (size_t)max_smem_per_block && "Requested shared memory exceeds device limits");
+
+    std::cout << "\n\nNon-blocked GEMM (vec) end-to-end example\n";
     std::cout << "M=" << M << " K=" << K << " N=" << N << "\n";
-    std::cout << "TB_M=" << TB_M << " TB_N=" << TB_N << " TB_K=" << TB_K << "\n";
+    std::cout << "TB_M=" << TB_M << " TB_N=" << TB_N << " TB_K=" << TB_K << " TM=" << TM <<" TN=" << TN << "\n";
 
         // Allocate host row-major matrices
     size_t sizeA = (size_t)M * K;
@@ -204,6 +337,10 @@ int main(int argc, char** argv) {
     for (size_t i = 0; i < sizeA; ++i) hA[i] = dist(rng);
     for (size_t i = 0; i < sizeB; ++i) hB[i] = dist(rng);
 
+    // Transpose A.
+    float* hA_t = (float*)malloc(sizeA * sizeof(float));
+    transpose_host(hA, hA_t, M, K);
+
     // Device allocations
     float *dAblk = nullptr, *dBblk = nullptr, *dC = nullptr;
     cudaCheck(cudaMalloc(&dAblk, sizeA * sizeof(float)));
@@ -211,16 +348,16 @@ int main(int argc, char** argv) {
     cudaCheck(cudaMalloc(&dC, sizeC * sizeof(float)));
 
     // Copy blocked tensors to device
-    cudaCheck(cudaMemcpy(dAblk, hA, sizeA * sizeof(float), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpy(dAblk, hA_t, sizeA * sizeof(float), cudaMemcpyHostToDevice));
     cudaCheck(cudaMemcpy(dBblk, hB, sizeB * sizeof(float), cudaMemcpyHostToDevice));
     cudaCheck(cudaMemset(dC, 0, sizeC * sizeof(float)));
 
     // Launch kernel
     dim3 grid(BM, BN);
-    dim3 block(TB_M * TB_N); // one thread per output element
+    dim3 block(NUM_THREADS); // one thread per TM output elements
     size_t smem_bytes = (TB_M * TB_K + TB_K * TB_N) * sizeof(float);
 
-    std::cout << "Launching kernel grid(" << BM << "," << BN << ") block(" << (TB_M*TB_N) << ") smem=" << smem_bytes << "\n";
+    std::cout << "Launching kernel grid(" << BM << "," << BN << ") block(" << NUM_THREADS << ") smem=" << smem_bytes << "\n";
 
     gemm_kernel<<<grid, block, smem_bytes>>>(dAblk, dBblk, dC, M, N, K, TB_M, TB_N, TB_K, BM, BN, BK);
     cudaCheck(cudaGetLastError());
@@ -341,7 +478,7 @@ int main(int argc, char** argv) {
     #endif
 
     // Cleanup
-    free(hA); free(hB); free(hC); free(hC_ref);
+    free(hA); free(hB); free(hC); free(hC_ref); free(hA_t);
     cudaFree(dAblk); cudaFree(dBblk); cudaFree(dC);
 
     return 0;
