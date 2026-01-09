@@ -1,5 +1,3 @@
-> ⚠️ **Work ongoing, repository not in finalized version.**
-
 # Repository structure
 ```
 dphpc-gemm/
