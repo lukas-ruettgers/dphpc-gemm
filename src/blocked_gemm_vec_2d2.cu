@@ -35,8 +35,8 @@ int K = 1024;
 int N = 1024;
 
 // Tile sizes (runtime)
-constexpr int TB_M = 64;
-constexpr int TB_N = 64;
+constexpr int TB_M = 128;
+constexpr int TB_N = 128;
 constexpr int TB_K = 16;
 
 constexpr int TM = 8;
@@ -188,8 +188,8 @@ __global__ void blocked_gemm_kernel(
 #pragma unroll
     for (int res_idx_m = 0; res_idx_m < TM; ++res_idx_m)
     {
-#pragma unroll
         const int row = bm * TB_M_ + tm * TM + res_idx_m;
+#pragma unroll
         for (int res_idx_n = 0; res_idx_n < TN; ++res_idx_n)
         {
             const int col = bn * TB_N_ + tn * TN + res_idx_n;
